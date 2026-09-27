@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Responsive Edge-Case Overrides
+   Breakpoints: 480px | 768px | 1024px | 1280px
+   (Keep minimal to avoid rule duplication with component sheets)
+   ========================================================================== */
+
+/* Universal Horizontal Overflow Prevention */
+body {
+  overflow-x: hidden;
+}
+
+/* Compact Mobile (< 480px) */
+@media (max-width: 479px) {
+  .hero {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-7);
+  }
+
+  .hero-title {
+    max-width: 100%;
+    font-size: clamp(1.875rem, 8vw, 2.25rem);
+  }
+
+  .search-widget {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .search-input,
+  .search-select,
+  .btn-search {
+    height: 48px; /* Comfortable mobile tap target */
+  }
+
+  .pricing-card {
+    padding: var(--space-5);
+  }
+
+  .contact-form {
+    padding: var(--space-4);
+  }
+}
+
+/* Ultra-Compact Screens (<= 375px, e.g. iPhone SE / Fold devices) */
+@media (max-width: 375px) {
+  .container {
+    padding-inline: var(--space-3);
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  .search-widget {
+    padding: var(--space-3);
+  }
+
+  .search-input,
+  .search-select {
+    padding-inline: var(--space-2);
+    font-size: 0.875rem;
+  }
+
+  .pricing-amount {
+    font-size: 2.25rem;
+  }
+
+  .pricing-card {
+    padding: var(--space-4);
+  }
+
+  .contact-form {
+    padding: var(--space-3);
+  }
+}

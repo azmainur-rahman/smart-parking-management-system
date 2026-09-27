@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking — Book Secure Parking in Dhaka</title>
+  <meta name="description" content="Book secure parking spaces in Dhaka by hour or day. Real-time availability, verified locations, and instant digital booking slips.">
+  <meta name="theme-color" content="#A8532E">
+  <link rel="canonical" href="https://smartparking.example/">
+
+  <!-- Open Graph Protocol -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smartparking.example/">
+  <meta property="og:title" content="Smart Parking — Book Secure Parking in Dhaka">
+  <meta property="og:description" content="Book secure parking spaces in Dhaka by hour or day. Real-time availability, verified locations, and instant digital booking slips.">
+  <!-- Note: Replace placeholder image below with actual asset in production -->
+  <meta property="og:image" content="/assets/images/og-placeholder.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Smart Parking — Book Secure Parking in Dhaka">
+  <meta name="twitter:description" content="Book secure parking spaces in Dhaka by hour or day. Real-time availability, verified locations, and instant digital booking slips.">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Header & Navigation -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="#" class="brand-logo" aria-label="Smart Parking Home">Smart Parking</a>
+
+      <button 
+        type="button" 
+        class="nav-toggle" 
+        aria-controls="primary-nav" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <nav id="primary-nav" class="primary-nav" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#" class="nav-link is-active" aria-current="page">Home</a></li>
+          <li><a href="#parking-locations" class="nav-link">Parking Locations</a></li>
+          <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#pricing" class="nav-link">Pricing</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <a href="#login" class="nav-login">Log In</a>
+          <a href="#signup" class="btn-signup">Sign Up</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" id="hero" aria-labelledby="hero-title">
+      <div class="container">
+        <div class="hero-content">
+          <p class="hero-eyebrow">Secure • Easy • Fast</p>
+          <h1 class="hero-title" id="hero-title">Find Your Parking Space Before You Arrive.</h1>
+          <p class="hero-subheading">Book secure parking spaces by hour or day, anywhere in the city.</p>
+        </div>
+
+        <!-- Search Widget Card -->
+        <div class="hero-search-wrapper">
+          <form class="search-widget" id="hero-search-form" novalidate>
+            <div class="search-field search-field-location">
+              <label for="search-location" class="search-label">Location</label>
+              <input 
+                type="text" 
+                id="search-location" 
+                name="location" 
+                class="search-input" 
+                placeholder="Where do you want to park?" 
+                required>
+            </div>
+
+            <div class="search-field search-field-date">
+              <label for="search-date" class="search-label">Date</label>
+              <input 
+                type="date" 
+                id="search-date" 
+                name="date" 
+                class="search-input" 
+                required>
+            </div>
+
+            <div class="search-field search-field-time">
+              <label for="search-time" class="search-label">Time</label>
+              <input 
+                type="time" 
+                id="search-time" 
+                name="time" 
+                class="search-input" 
+                required>
+            </div>
+
+            <div class="search-field search-field-duration">
+              <label for="search-duration" class="search-label">Duration</label>
+              <select id="search-duration" name="duration" class="search-select">
+                <option value="1h">1 Hour</option>
+                <option value="2h" selected>2 Hours</option>
+                <option value="3h">3 Hours</option>
+                <option value="4h">4 Hours</option>
+                <option value="1d">1 Day</option>
+                <option value="2d">2 Days</option>
+                <option value="3d">3 Days</option>
+              </select>
+            </div>
+
+            <div class="search-action">
+              <button type="submit" class="btn-search">Search Parking</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Park With Us (Benefits) Section -->
+    <section class="benefits" id="features" aria-labelledby="benefits-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="section-eyebrow">Distinct Advantages</p>
+          <h2 class="section-title" id="benefits-title">Why Park With Us</h2>
+        </header>
+
+        <div class="benefits-grid">
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Easy Booking</h3>
+            <p class="benefit-text">Book your parking space before reaching the destination.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Real-Time Availability</h3>
+            <p class="benefit-text">See which parking slots are available.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Flexible Duration</h3>
+            <p class="benefit-text">Book by the hour or by the day to match your exact schedule.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Secure Parking</h3>
+            <p class="benefit-text">Verified parking locations with dedicated facility oversight.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Digital Payment</h3>
+            <p class="benefit-text">Pay online securely through verified gateways.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">Digital Booking Slip</h3>
+            <p class="benefit-text">Receive a booking confirmation immediately.</p>
+          </article>
+
+          <article class="benefit-item">
+            <h3 class="benefit-heading">No Parking Hassle</h3>
+            <p class="benefit-text">Know your parking space before you arrive.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works" aria-labelledby="how-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="section-eyebrow">Clear Process</p>
+          <h2 class="section-title" id="how-title">How It Works</h2>
+        </header>
+
+        <ol class="steps-sequence">
+          <li class="step-item">
+            <span class="step-num" aria-hidden="true">01</span>
+            <div class="step-content">
+              <h3 class="step-heading">Create Account</h3>
+              <p class="step-text">Set up your profile in moments to manage bookings seamlessly.</p>
+            </div>
+          </li>
+
+          <li class="step-item">
+            <span class="step-num" aria-hidden="true">02</span>
+            <div class="step-content">
+              <h3 class="step-heading">Add Your Vehicle</h3>
+              <p class="step-text">Register your vehicle details and license plate once for instant use.</p>
+            </div>
+          </li>
+
+          <li class="step-item">
+            <span class="step-num" aria-hidden="true">03</span>
+            <div class="step-content">
+              <h3 class="step-heading">Find Parking</h3>
+              <p class="step-text">Search locations and browse real-time occupancy across floors.</p>
+            </div>
+          </li>
+
+          <li class="step-item">
+            <span class="step-num" aria-hidden="true">04</span>
+            <div class="step-content">
+              <h3 class="step-heading">Select Slot &amp; Pay</h3>
+              <p class="step-text">Choose your preferred bay and complete payment online securely.</p>
+            </div>
+          </li>
+
+          <li class="step-item">
+            <span class="step-num" aria-hidden="true">05</span>
+            <div class="step-content">
+              <h3 class="step-heading">Park Your Vehicle</h3>
+              <p class="step-text">Arrive at your reserved unit and show your digital booking slip.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Available Parking Locations Section -->
+    <section class="locations" id="parking-locations" aria-labelledby="locations-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="section-eyebrow">Prime Destinations</p>
+          <h2 class="section-title" id="locations-title">Available Parking Locations</h2>
+          <p class="section-description">Select from verified multi-tier parking facilities across the capital.</p>
+        </header>
+
+        <div class="locations-grid">
+          <!-- Location 1 -->
+          <article class="location-card">
+            <div class="location-media-placeholder" aria-label="Facility preview placeholder">
+              <span class="media-placeholder-label">Image</span>
+            </div>
+            <div class="location-body">
+              <div class="location-title-wrap">
+                <h3 class="location-name">Bashundhara City Parking</h3>
+                <span class="location-city">Dhaka</span>
+              </div>
+              <div class="location-details">
+                <p class="location-slots">38 slots available</p>
+                <p class="location-rate">From ৳50/hour</p>
+              </div>
+              <div class="location-action">
+                <a href="#parking" class="location-link">View Parking &rarr;</a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Location 2 -->
+          <article class="location-card">
+            <div class="location-media-placeholder" aria-label="Facility preview placeholder">
+              <span class="media-placeholder-label">Image</span>
+            </div>
+            <div class="location-body">
+              <div class="location-title-wrap">
+                <h3 class="location-name">Gulshan Avenue Parking</h3>
+                <span class="location-city">Dhaka</span>
+              </div>
+              <div class="location-details">
+                <p class="location-slots">22 slots available</p>
+                <p class="location-rate">From ৳60/hour</p>
+              </div>
+              <div class="location-action">
+                <a href="#parking" class="location-link">View Parking &rarr;</a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Location 3 -->
+          <article class="location-card">
+            <div class="location-media-placeholder" aria-label="Facility preview placeholder">
+              <span class="media-placeholder-label">Image</span>
+            </div>
+            <div class="location-body">
+              <div class="location-title-wrap">
+                <h3 class="location-name">Dhanmondi Lake Parking</h3>
+                <span class="location-city">Dhaka</span>
+              </div>
+              <div class="location-details">
+                <p class="location-slots">15 slots available</p>
+                <p class="location-rate">From ৳45/hour</p>
+              </div>
+              <div class="location-action">
+                <a href="#parking" class="location-link">View Parking &rarr;</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing" aria-labelledby="pricing-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="section-eyebrow">Predictable Rates</p>
+          <h2 class="section-title" id="pricing-title">Simple, Transparent Pricing</h2>
+          <p class="section-description">Clear hourly and day-rate options with no surge pricing or hidden convenience charges.</p>
+        </header>
+
+        <div class="pricing-grid">
+          <!-- Hourly Card -->
+          <article class="pricing-card">
+            <div class="pricing-header">
+              <span class="pricing-tag">Hourly</span>
+              <h3 class="pricing-headline">Pay by the Hour</h3>
+              <p class="pricing-note">Ideal for quick errands and short visits.</p>
+            </div>
+
+            <div class="pricing-figure-block">
+              <div class="pricing-main-rate">
+                <span class="pricing-amount">৳50</span>
+                <span class="pricing-unit">/ hour</span>
+              </div>
+              <span class="pricing-meta-label">Car Rate</span>
+              <p class="pricing-subrate">Motorcycle: ৳30/hour</p>
+            </div>
+
+            <ul class="pricing-features">
+              <li>Real-time slot availability</li>
+              <li>Digital booking slip</li>
+              <li>Secure online payment</li>
+            </ul>
+
+            <div class="pricing-action">
+              <a href="#pricing-details" class="pricing-link">Learn More &rarr;</a>
+            </div>
+          </article>
+
+          <!-- Daily Card -->
+          <article class="pricing-card">
+            <div class="pricing-header">
+              <span class="pricing-tag">Daily</span>
+              <h3 class="pricing-headline">Full-Day Pass</h3>
+              <p class="pricing-note">Best value for all-day access.</p>
+            </div>
+
+            <div class="pricing-figure-block">
+              <div class="pricing-main-rate">
+                <span class="pricing-amount">৳500</span>
+                <span class="pricing-unit">/ day</span>
+              </div>
+              <span class="pricing-meta-label">Car Rate</span>
+              <p class="pricing-subrate">Motorcycle: ৳300/day</p>
+            </div>
+
+            <ul class="pricing-features">
+              <li>Guaranteed all-day bay reservation</li>
+              <li>Flexible in-and-out access</li>
+              <li>Priority customer assistance</li>
+            </ul>
+
+            <div class="pricing-action">
+              <a href="#pricing-details" class="pricing-link">Learn More &rarr;</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="about-container">
+          <header class="section-header">
+            <p class="section-eyebrow">Our Purpose</p>
+            <h2 class="section-title" id="about-title">About Smart Parking</h2>
+          </header>
+
+          <div class="about-editorial">
+            <p class="about-lead">
+              Urban transit demands predictability. Smart Parking was conceived to eliminate the friction and congestion associated with destination parking across dense metropolitan centers. By digitizing slot inventories in real time and enabling deliberate advance reservations, we transform unpredictable urban arrivals into calm, seamless experiences. Our infrastructure connects drivers directly with verified facility managers, ensuring transparency, security, and fair pricing at every tier. We believe city infrastructure should serve people with quiet efficiency.
+            </p>
+            <div class="about-action">
+              <a href="#contact" class="about-link">Get in touch &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="section-eyebrow">Direct Inquiries</p>
+          <h2 class="section-title" id="contact-title">Get in Touch</h2>
+        </header>
+
+        <div class="contact-grid">
+          <!-- Left Column: Details -->
+          <div class="contact-info">
+            <p class="contact-intro">
+              Have questions regarding facility onboarding, corporate parking allotments, or reservation support? Reach out to our operational team directly.
+            </p>
+
+            <div class="contact-details">
+              <div class="contact-detail-item">
+                <span class="contact-detail-label">Email</span>
+                <a href="mailto:hello@smartparking.example" class="contact-detail-value">hello@smartparking.example</a>
+              </div>
+
+              <div class="contact-detail-item">
+                <span class="contact-detail-label">Phone</span>
+                <a href="tel:+880-XXX-XXXXXX" class="contact-detail-value">+880-XXX-XXXXXX</a>
+              </div>
+
+              <div class="contact-detail-item">
+                <span class="contact-detail-label">Location</span>
+                <span class="contact-detail-value">Dhaka, Bangladesh</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Form -->
+          <div class="contact-form-wrapper">
+            <form class="contact-form" id="contact-form" novalidate>
+              <div class="form-group">
+                <label for="contact-name" class="form-label">Full Name</label>
+                <input 
+                  type="text" 
+                  id="contact-name" 
+                  name="name" 
+                  class="form-input" 
+                  placeholder="Your full name" 
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="contact-email" class="form-label">Email Address</label>
+                <input 
+                  type="email" 
+                  id="contact-email" 
+                  name="email" 
+                  class="form-input" 
+                  placeholder="name@example.com" 
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="contact-subject" class="form-label">Subject</label>
+                <input 
+                  type="text" 
+                  id="contact-subject" 
+                  name="subject" 
+                  class="form-input" 
+                  placeholder="Inquiry topic" 
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="contact-message" class="form-label">Message</label>
+                <textarea 
+                  id="contact-message" 
+                  name="message" 
+                  class="form-textarea" 
+                  rows="5" 
+                  placeholder="How can we assist you?" 
+                  required></textarea>
+              </div>
+
+              <div class="form-action">
+                <button type="submit" class="btn-submit">Send Message</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand-col">
+          <a href="#" class="brand-logo footer-logo">Smart Parking</a>
+          <p class="footer-tagline">Curated, reliable urban space reservations designed for intentional mobility.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Company</h4>
+          <ul class="footer-links">
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Product</h4>
+          <ul class="footer-links">
+            <li><a href="#parking-locations">Parking Locations</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="#privacy">Privacy</a></li>
+            <li><a href="#terms">Terms</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">&copy; 2026 Smart Parking System. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/navbar.js"></script>
+  <script src="js/hero.js"></script>
+  <script src="js/contact.js"></script>
+  <script src="js/meta.js"></script>
+</body>
+</html>
