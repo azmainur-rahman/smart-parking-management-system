@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Checkout — Smart Parking</title>
+  <meta name="description" content="Secure payment session for your reserved parking bay.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/booking.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Payment Landmark -->
+  <main id="main-content" class="booking-page-main">
+    <div class="container">
+      
+      <!-- Off-Screen Screen Reader Live Announcements -->
+      <div id="sr-countdown-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- Payment Card Container -->
+      <div class="payment-card-panel" id="payment-panel">
+        
+        <!-- Loading State -->
+        <div id="payment-loading-state" style="text-align: center; padding: var(--space-6);">
+          <p class="summary-detail-label">Loading reservation details and payment gateway session...</p>
+        </div>
+
+        <!-- Expired State Card (Hidden by Default) -->
+        <div id="payment-expired-card" class="payment-expired-card" style="display: none;">
+          <h1 class="payment-expired-title">Reservation Hold Expired</h1>
+          <p class="payment-expired-desc">
+            Your 10-minute provisional booking hold has lapsed. The parking bay has been released to the public pool to prevent lockouts.
+          </p>
+          <a href="parking.html" class="btn btn-primary" style="display: inline-block; min-height: 48px; line-height: 46px; padding-inline: var(--space-6);">
+            Find Available Parking
+          </a>
+        </div>
+
+        <!-- Cancelled State Card (Hidden by Default) -->
+        <div id="payment-cancelled-card" class="payment-expired-card" style="display: none;">
+          <h1 class="payment-expired-title" style="color: var(--color-ink);">Reservation Cancelled</h1>
+          <p class="payment-expired-desc">
+            This reservation has been cancelled and the parking slot has been made available for other motorists.
+          </p>
+          <a href="parking.html" class="btn btn-secondary" style="display: inline-block; min-height: 48px; line-height: 46px; padding-inline: var(--space-6);">
+            Browse Parking Facilities
+          </a>
+        </div>
+
+        <!-- Active Checkout Content -->
+        <div id="payment-active-content" style="display: none;">
+          
+          <!-- Header -->
+          <header style="border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-4); margin-bottom: var(--space-5);">
+            <p class="booking-eyebrow">Checkout &amp; Confirmation</p>
+            <h1 class="booking-title" style="font-size: 1.5rem; margin-bottom: var(--space-1);">Complete Your Reservation</h1>
+            <p class="booking-desc" style="font-size: 0.875rem;" id="checkout-booking-number">—</p>
+          </header>
+
+          <!-- 10-Minute Hold Countdown Box -->
+          <section class="countdown-timer-box" aria-labelledby="countdown-heading">
+            <h2 id="countdown-heading" class="countdown-label">Provisional Hold Remaining</h2>
+            <div id="countdown-display" class="countdown-digits" aria-hidden="true">10:00</div>
+            <p style="font-size: 0.75rem; color: var(--color-muted); margin-top: var(--space-1);">
+              Complete payment before this timer reaches zero to retain your allocated bay.
+            </p>
+          </section>
+
+          <!-- Reservation Summary Review -->
+          <section aria-labelledby="order-summary-title">
+            <h2 id="order-summary-title" class="summary-heading" style="font-size: 1rem;">Reservation Details</h2>
+            
+            <div class="summary-details-list">
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Facility</span>
+                <span id="pay-facility" class="summary-detail-value">—</span>
+              </div>
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Floor &amp; Unit</span>
+                <span id="pay-floor-unit" class="summary-detail-value">—</span>
+              </div>
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Parking Bay</span>
+                <span id="pay-slot" class="summary-detail-value">—</span>
+              </div>
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Vehicle</span>
+                <span id="pay-vehicle" class="summary-detail-value">—</span>
+              </div>
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Schedule Window</span>
+                <span id="pay-schedule" class="summary-detail-value">—</span>
+              </div>
+              <div class="summary-detail-row">
+                <span class="summary-detail-label">Duration</span>
+                <span id="pay-duration" class="summary-detail-value">—</span>
+              </div>
+            </div>
+
+            <!-- Price Summary -->
+            <div class="summary-pricing-block" style="margin-bottom: var(--space-4);">
+              <div class="price-breakdown-row total-row" style="margin-top: 0; padding-top: 0; border-top: none;">
+                <span>Total Amount Due</span>
+                <span id="pay-total-amount" class="total-amount">৳0</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mock Gateway Testing Panel -->
+          <section id="mock-gateway-panel" class="mock-payment-box" aria-labelledby="mock-panel-title">
+            <h2 id="mock-panel-title" class="mock-payment-heading">Test payment (mock gateway)</h2>
+            <p style="font-size: 0.8125rem; color: var(--color-muted); margin-bottom: var(--space-3); line-height: 1.4;">
+              The system is operating in simulated mode. Use the actions below to trigger realistic gateway callbacks.
+            </p>
+
+            <div class="mock-buttons-row">
+              <button type="button" id="btn-mock-success" class="btn btn-simulate-success">
+                Simulate Success
+              </button>
+              <button type="button" id="btn-mock-fail" class="btn btn-simulate-fail">
+                Simulate Failure
+              </button>
+              <button type="button" id="btn-cancel-booking" class="btn btn-cancel-hold">
+                Cancel Booking
+              </button>
+            </div>
+
+            <!-- Failure Notice & Retry Action -->
+            <div id="mock-fail-notice" class="payment-alert-box alert-error" style="display: none;" role="alert">
+              <p id="mock-fail-text">Payment simulation failed.</p>
+              <div style="margin-top: var(--space-2);">
+                <button type="button" id="btn-retry-payment" class="btn btn-secondary" style="min-height: 40px; padding-inline: var(--space-4); font-size: 0.8125rem;">
+                  Retry Payment
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Non-Mock Production Gateway Redirect Placeholder -->
+          <section id="live-gateway-panel" class="mock-payment-box" style="display: none; text-align: center;">
+            <p class="summary-detail-value" style="margin-bottom: var(--space-2);">Redirecting to payment gateway...</p>
+            <p style="font-size: 0.8125rem; color: var(--color-muted);">
+              Please wait while your secure payment session is handed off to the payment partner.
+            </p>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initPaymentPage() {
+      // 1. Auth Guard
+      if (typeof requireLogin === 'function') {
+        if (!requireLogin()) return;
+      }
+
+      // 2. Render Shared Chrome
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const bookingId = urlParams.get('bookingId');
+
+      if (!bookingId) {
+        window.location.href = 'parking.html';
+        return;
+      }
+
+      // DOM Elements
+      const loadingState = document.getElementById('payment-loading-state');
+      const activeContent = document.getElementById('payment-active-content');
+      const expiredCard = document.getElementById('payment-expired-card');
+      const cancelledCard = document.getElementById('payment-cancelled-card');
+      const srAnnouncer = document.getElementById('sr-countdown-announcer');
+      const countdownDisplay = document.getElementById('countdown-display');
+
+      const checkoutBookingNumber = document.getElementById('checkout-booking-number');
+      const payFacility = document.getElementById('pay-facility');
+      const payFloorUnit = document.getElementById('pay-floor-unit');
+      const paySlot = document.getElementById('pay-slot');
+      const payVehicle = document.getElementById('pay-vehicle');
+      const paySchedule = document.getElementById('pay-schedule');
+      const payDuration = document.getElementById('pay-duration');
+      const payTotalAmount = document.getElementById('pay-total-amount');
+
+      const mockGatewayPanel = document.getElementById('mock-gateway-panel');
+      const liveGatewayPanel = document.getElementById('live-gateway-panel');
+      const mockFailNotice = document.getElementById('mock-fail-notice');
+      const mockFailText = document.getElementById('mock-fail-text');
+
+      const btnMockSuccess = document.getElementById('btn-mock-success');
+      const btnMockFail = document.getElementById('btn-mock-fail');
+      const btnCancelBooking = document.getElementById('btn-cancel-booking');
+      const btnRetryPayment = document.getElementById('btn-retry-payment');
+
+      // State
+      let booking = null;
+      let transactionId = null;
+      let gateway = 'MOCK';
+      let holdExpiresAt = null;
+      let timerInterval = null;
+      let lastAnnouncedMinute = null;
+
+      function renderExpired() {
+        if (timerInterval) clearInterval(timerInterval);
+        activeContent.style.display = 'none';
+        loadingState.style.display = 'none';
+        cancelledCard.style.display = 'none';
+        expiredCard.style.display = 'block';
+        srAnnouncer.textContent = 'Your booking hold has expired.';
+      }
+
+      function renderCancelled() {
+        if (timerInterval) clearInterval(timerInterval);
+        activeContent.style.display = 'none';
+        loadingState.style.display = 'none';
+        expiredCard.style.display = 'none';
+        cancelledCard.style.display = 'block';
+        srAnnouncer.textContent = 'This booking has been cancelled.';
+      }
+
+      function startCountdown(expiryDate) {
+        if (timerInterval) clearInterval(timerInterval);
+
+        function tick() {
+          const now = new Date().getTime();
+          const distance = expiryDate.getTime() - now;
+
+          if (distance <= 0) {
+            renderExpired();
+            return;
+          }
+
+          const minutes = Math.floor(distance / (1000 * 60));
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          const mm = String(minutes).padStart(2, '0');
+          const ss = String(seconds).padStart(2, '0');
+          countdownDisplay.textContent = `${mm}:${ss}`;
+
+          // aria-live off-screen update each minute
+          if (lastAnnouncedMinute === null || lastAnnouncedMinute !== minutes) {
+            lastAnnouncedMinute = minutes;
+            const minWord = minutes === 1 ? '1 minute' : `${minutes} minutes`;
+            srAnnouncer.textContent = `${minWord} remaining to complete your booking hold.`;
+          }
+        }
+
+        tick();
+        timerInterval = setInterval(tick, 1000);
+      }
+
+      try {
+        // Fetch Booking Details
+        const bookingRes = await apiRequest(`/bookings/${bookingId}`);
+        booking = bookingRes.booking;
+
+        if (!booking) {
+          throw new Error('Booking could not be retrieved.');
+        }
+
+        // Check if already finalized
+        if (booking.bookingStatus === 'CONFIRMED' || booking.paymentStatus === 'PAID') {
+          window.location.href = `booking-success.html?bookingId=${booking._id}`;
+          return;
+        }
+
+        if (booking.bookingStatus === 'CANCELLED') {
+          renderCancelled();
+          return;
+        }
+
+        if (booking.bookingStatus === 'EXPIRED') {
+          renderExpired();
+          return;
+        }
+
+        // Fetch or Initiate Payment Session
+        let paymentRes = null;
+        try {
+          paymentRes = await apiRequest(`/payments/booking/${bookingId}`);
+        } catch (e) {
+          // If not initiated yet, call initiate
+          paymentRes = await apiRequest('/payments/initiate', {
+            method: 'POST',
+            body: JSON.stringify({ bookingId: booking._id })
+          });
+        }
+
+        const session = paymentRes.session || paymentRes.payment || {};
+        transactionId = session.transactionId;
+        gateway = session.gateway || paymentRes.gateway || 'MOCK';
+        holdExpiresAt = booking.holdExpiresAt || session.holdExpiresAt || paymentRes.holdExpiresAt;
+
+        // Verify hold validity
+        if (!holdExpiresAt) {
+          // Default to now + 10m if missing
+          holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        }
+
+        const expiryDate = new Date(holdExpiresAt);
+        if (expiryDate.getTime() <= Date.now()) {
+          renderExpired();
+          return;
+        }
+
+        // Populate Booking Summary using textContent
+        checkoutBookingNumber.textContent = `Reservation #${booking.bookingNumber || booking._id}`;
+        payFacility.textContent = booking.locationId ? booking.locationId.name : 'Facility';
+        
+        const floorName = booking.floorId ? booking.floorId.name : 'Floor';
+        const unitName = booking.unitId ? `${booking.unitId.name} (${booking.unitId.code || ''})` : 'Unit';
+        payFloorUnit.textContent = `${floorName} — ${unitName}`;
+
+        paySlot.textContent = booking.slotId ? `Bay ${booking.slotId.slotNumber}` : 'Allocated Bay';
+
+        if (booking.vehicleId) {
+          const v = booking.vehicleId;
+          payVehicle.textContent = `${v.brand || ''} ${v.model || ''} (${v.registrationNumber || ''})`.trim();
+        } else {
+          payVehicle.textContent = 'Registered Vehicle';
+        }
+
+        const sStart = new Date(booking.startTime);
+        const sEnd = new Date(booking.endTime);
+        paySchedule.textContent = `${sStart.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}: ${sStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${sEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+        const durLabel = booking.durationType === 'DAILY'
+          ? (booking.duration === 1 ? '1 Day (24h)' : `${booking.duration} Days`)
+          : (booking.duration === 1 ? '1 Hour' : `${booking.duration} Hours`);
+        payDuration.textContent = durLabel;
+
+        payTotalAmount.textContent = `৳${booking.totalAmount || 0}`;
+
+        // Toggle Mock vs Real Gateway Panel
+        if (gateway === 'MOCK') {
+          mockGatewayPanel.style.display = 'block';
+          liveGatewayPanel.style.display = 'none';
+        } else {
+          mockGatewayPanel.style.display = 'none';
+          liveGatewayPanel.style.display = 'block';
+        }
+
+        loadingState.style.display = 'none';
+        activeContent.style.display = 'block';
+
+        // Start countdown
+        startCountdown(expiryDate);
+
+      } catch (err) {
+        console.error('Payment initialization error:', err);
+        loadingState.textContent = '';
+        const errMsg = document.createElement('p');
+        errMsg.className = 'summary-error-box';
+        errMsg.textContent = err.message || 'Failed to initialize payment session.';
+        loadingState.appendChild(errMsg);
+
+        const returnBtn = document.createElement('a');
+        returnBtn.href = 'parking.html';
+        returnBtn.className = 'btn btn-secondary';
+        returnBtn.style.marginTop = 'var(--space-4)';
+        returnBtn.style.display = 'inline-block';
+        returnBtn.textContent = 'Return to Parking';
+        loadingState.appendChild(returnBtn);
+        return;
+      }
+
+      // Action Handlers
+      function setButtonsDisabled(state) {
+        btnMockSuccess.disabled = state;
+        btnMockFail.disabled = state;
+        btnCancelBooking.disabled = state;
+      }
+
+      // Simulate Success
+      btnMockSuccess.addEventListener('click', async () => {
+        setButtonsDisabled(true);
+        mockFailNotice.style.display = 'none';
+        btnMockSuccess.textContent = 'Processing Payment...';
+
+        try {
+          await apiRequest('/payments/success?simulate=true', {
+            method: 'POST',
+            body: JSON.stringify({ transactionId })
+          });
+
+          if (timerInterval) clearInterval(timerInterval);
+          window.location.href = `booking-success.html?bookingId=${booking._id}`;
+        } catch (err) {
+          console.error('Simulate success error:', err);
+          setButtonsDisabled(false);
+          btnMockSuccess.textContent = 'Simulate Success';
+          mockFailText.textContent = err.message || 'Payment simulation encountered an error.';
+          mockFailNotice.style.display = 'block';
+        }
+      });
+
+      // Simulate Failure
+      btnMockFail.addEventListener('click', async () => {
+        setButtonsDisabled(true);
+        mockFailNotice.style.display = 'none';
+        btnMockFail.textContent = 'Simulating Failure...';
+
+        try {
+          await apiRequest('/payments/fail', {
+            method: 'POST',
+            body: JSON.stringify({ transactionId })
+          });
+
+          btnMockFail.textContent = 'Simulate Failure';
+          mockFailText.textContent = 'Simulated payment was declined by the test gateway. Your provisional hold remains active.';
+          mockFailNotice.style.display = 'block';
+          btnRetryPayment.style.display = 'inline-block';
+          btnCancelBooking.disabled = false;
+        } catch (err) {
+          console.error('Simulate fail error:', err);
+          btnMockFail.textContent = 'Simulate Failure';
+          mockFailText.textContent = err.message || 'Failed to report payment failure.';
+          mockFailNotice.style.display = 'block';
+          btnRetryPayment.style.display = 'inline-block';
+          btnCancelBooking.disabled = false;
+        }
+      });
+
+      // Retry Payment
+      btnRetryPayment.addEventListener('click', async () => {
+        mockFailNotice.style.display = 'none';
+        btnRetryPayment.disabled = true;
+        btnRetryPayment.textContent = 'Re-initiating session...';
+
+        try {
+          // Re-initiate payment to obtain a fresh transaction session
+          const initRes = await apiRequest('/payments/initiate', {
+            method: 'POST',
+            body: JSON.stringify({ bookingId: booking._id })
+          });
+
+          const session = initRes.session || {};
+          transactionId = session.transactionId || initRes.transactionId;
+          setButtonsDisabled(false);
+          btnRetryPayment.disabled = false;
+          btnRetryPayment.textContent = 'Retry Payment';
+        } catch (err) {
+          console.error('Retry initiation error:', err);
+          btnRetryPayment.disabled = false;
+          btnRetryPayment.textContent = 'Retry Payment';
+          mockFailText.textContent = err.message || 'Could not re-initiate payment session. The hold may have expired.';
+          mockFailNotice.style.display = 'block';
+          if (err.message && err.message.toLowerCase().includes('expired')) {
+            renderExpired();
+          }
+        }
+      });
+
+      // Cancel Booking
+      btnCancelBooking.addEventListener('click', async () => {
+        if (!confirm('Are you sure you wish to cancel this reservation? The parking bay will be released immediately.')) {
+          return;
+        }
+
+        setButtonsDisabled(true);
+        btnCancelBooking.textContent = 'Cancelling...';
+
+        try {
+          await apiRequest(`/bookings/${booking._id}/cancel`, {
+            method: 'POST'
+          });
+
+          renderCancelled();
+        } catch (err) {
+          console.error('Cancel booking error:', err);
+          setButtonsDisabled(false);
+          btnCancelBooking.textContent = 'Cancel Booking';
+          mockFailText.textContent = err.message || 'Could not cancel booking.';
+          mockFailNotice.style.display = 'block';
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initPaymentPage();
+      } catch (err) {
+        console.error('Payment page init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

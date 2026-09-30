@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Profile — Smart Parking</title>
+  <meta name="description" content="View and update your personal details and account credentials.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/auth.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/shell.js"></script>
+
+  <script>
+    async function initProfile() {
+      try {
+        const appContent = renderShell('profile');
+        if (!appContent) return;
+
+      // Page Header
+      const header = document.createElement('header');
+      header.className = 'app-page-header';
+
+      const titleWrap = document.createElement('div');
+      const eyebrow = document.createElement('p');
+      eyebrow.className = 'app-page-eyebrow';
+      eyebrow.textContent = 'Account Settings';
+
+      const title = document.createElement('h1');
+      title.className = 'app-page-title';
+      title.textContent = 'Profile & Security';
+
+      const desc = document.createElement('p');
+      desc.className = 'app-page-desc';
+      desc.textContent = 'Manage your personal contact details and password credentials.';
+
+      titleWrap.appendChild(eyebrow);
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(desc);
+      header.appendChild(titleWrap);
+
+      appContent.appendChild(header);
+
+      // Two-Column Grid for Profile & Password Sections
+      const grid = document.createElement('div');
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(320px, 1fr))';
+      grid.style.gap = 'var(--space-6)';
+      appContent.appendChild(grid);
+
+      // ----------------------------------------------------------------------
+      // Column 1: Personal Profile Information Form
+      // ----------------------------------------------------------------------
+      const profileCard = document.createElement('section');
+      profileCard.className = 'auth-panel';
+      profileCard.setAttribute('aria-labelledby', 'profile-heading');
+
+      const pHeader = document.createElement('header');
+      pHeader.className = 'auth-header';
+      const pTitle = document.createElement('h2');
+      pTitle.className = 'section-title';
+      pTitle.id = 'profile-heading';
+      pTitle.textContent = 'Personal Details';
+      pHeader.appendChild(pTitle);
+      profileCard.appendChild(pHeader);
+
+      const profileAlert = document.createElement('div');
+      profileAlert.className = 'auth-alert';
+      profileAlert.setAttribute('role', 'alert');
+      profileCard.appendChild(profileAlert);
+
+      const profileForm = document.createElement('form');
+      profileForm.className = 'auth-form';
+      profileForm.noValidate = true;
+
+      // Email Field (Read-Only)
+      const emailField = document.createElement('div');
+      emailField.className = 'form-field';
+      const emailLabel = document.createElement('label');
+      emailLabel.className = 'form-label';
+      emailLabel.textContent = 'Email Address (Read-only)';
+      emailLabel.htmlFor = 'prof-email';
+      const emailInput = document.createElement('input');
+      emailInput.type = 'email';
+      emailInput.id = 'prof-email';
+      emailInput.className = 'form-input';
+      emailInput.readOnly = true;
+      emailInput.style.backgroundColor = '#F5F3EC';
+      emailInput.style.color = 'var(--color-muted)';
+      emailInput.style.cursor = 'not-allowed';
+      emailField.appendChild(emailLabel);
+      emailField.appendChild(emailInput);
+      profileForm.appendChild(emailField);
+
+      // Full Name Field
+      const nameField = document.createElement('div');
+      nameField.className = 'form-field';
+      const nameLabel = document.createElement('label');
+      nameLabel.className = 'form-label';
+      nameLabel.textContent = 'Full Name *';
+      nameLabel.htmlFor = 'prof-name';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.id = 'prof-name';
+      nameInput.className = 'form-input';
+      nameInput.required = true;
+      nameField.appendChild(nameLabel);
+      nameField.appendChild(nameInput);
+      profileForm.appendChild(nameField);
+
+      // Phone Field
+      const phoneField = document.createElement('div');
+      phoneField.className = 'form-field';
+      const phoneLabel = document.createElement('label');
+      phoneLabel.className = 'form-label';
+      phoneLabel.textContent = 'Phone Number';
+      phoneLabel.htmlFor = 'prof-phone';
+      const phoneInput = document.createElement('input');
+      phoneInput.type = 'tel';
+      phoneInput.id = 'prof-phone';
+      phoneInput.className = 'form-input';
+      phoneInput.placeholder = '+880 1XXXXXXXXX';
+      phoneField.appendChild(phoneLabel);
+      phoneField.appendChild(phoneInput);
+      profileForm.appendChild(phoneField);
+
+      // Save Profile Button
+      const saveProfileBtn = document.createElement('button');
+      saveProfileBtn.type = 'submit';
+      saveProfileBtn.className = 'btn-primary';
+      saveProfileBtn.textContent = 'Save Profile Details';
+      profileForm.appendChild(saveProfileBtn);
+
+      profileCard.appendChild(profileForm);
+      grid.appendChild(profileCard);
+
+      // ----------------------------------------------------------------------
+      // Column 2: Security & Password Update Form
+      // ----------------------------------------------------------------------
+      const passCard = document.createElement('section');
+      passCard.className = 'auth-panel';
+      passCard.setAttribute('aria-labelledby', 'password-heading');
+
+      const passHeader = document.createElement('header');
+      passHeader.className = 'auth-header';
+      const passTitle = document.createElement('h2');
+      passTitle.className = 'section-title';
+      passTitle.id = 'password-heading';
+      passTitle.textContent = 'Security Credentials';
+      passHeader.appendChild(passTitle);
+      passCard.appendChild(passHeader);
+
+      const passAlert = document.createElement('div');
+      passAlert.className = 'auth-alert';
+      passAlert.setAttribute('role', 'alert');
+      passCard.appendChild(passAlert);
+
+      const passForm = document.createElement('form');
+      passForm.className = 'auth-form';
+      passForm.noValidate = true;
+
+      // Current Password Field
+      const curPassField = document.createElement('div');
+      curPassField.className = 'form-field';
+      const curPassLabel = document.createElement('label');
+      curPassLabel.className = 'form-label';
+      curPassLabel.textContent = 'Current Password *';
+      curPassLabel.htmlFor = 'cur-password';
+      const curPassInput = document.createElement('input');
+      curPassInput.type = 'password';
+      curPassInput.id = 'cur-password';
+      curPassInput.className = 'form-input';
+      curPassInput.required = true;
+      curPassField.appendChild(curPassLabel);
+      curPassField.appendChild(curPassInput);
+      passForm.appendChild(curPassField);
+
+      // New Password Field
+      const newPassField = document.createElement('div');
+      newPassField.className = 'form-field';
+      const newPassLabel = document.createElement('label');
+      newPassLabel.className = 'form-label';
+      newPassLabel.textContent = 'New Password (min 8 characters) *';
+      newPassLabel.htmlFor = 'new-password';
+      const newPassInput = document.createElement('input');
+      newPassInput.type = 'password';
+      newPassInput.id = 'new-password';
+      newPassInput.className = 'form-input';
+      newPassInput.minLength = 8;
+      newPassInput.required = true;
+      newPassField.appendChild(newPassLabel);
+      newPassField.appendChild(newPassInput);
+      passForm.appendChild(newPassField);
+
+      // Confirm New Password Field
+      const confPassField = document.createElement('div');
+      confPassField.className = 'form-field';
+      const confPassLabel = document.createElement('label');
+      confPassLabel.className = 'form-label';
+      confPassLabel.textContent = 'Confirm New Password *';
+      confPassLabel.htmlFor = 'conf-password';
+      const confPassInput = document.createElement('input');
+      confPassInput.type = 'password';
+      confPassInput.id = 'conf-password';
+      confPassInput.className = 'form-input';
+      confPassInput.required = true;
+      confPassField.appendChild(confPassLabel);
+      confPassField.appendChild(confPassInput);
+      passForm.appendChild(confPassField);
+
+      // Update Password Button
+      const savePassBtn = document.createElement('button');
+      savePassBtn.type = 'submit';
+      savePassBtn.className = 'btn-primary';
+      savePassBtn.textContent = 'Update Password';
+      passForm.appendChild(savePassBtn);
+
+      passCard.appendChild(passForm);
+      grid.appendChild(passCard);
+
+      // ----------------------------------------------------------------------
+      // Populate Initial Profile Data
+      // ----------------------------------------------------------------------
+      try {
+        const userRes = await apiRequest('/users/me');
+        const userData = userRes.user || getUser();
+        if (userData) {
+          nameInput.value = userData.name || '';
+          emailInput.value = userData.email || '';
+          phoneInput.value = userData.phone || '';
+        }
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+        const local = getUser();
+        if (local) {
+          nameInput.value = local.name || '';
+          emailInput.value = local.email || '';
+          phoneInput.value = local.phone || '';
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // Handle Profile Form Submit
+      // ----------------------------------------------------------------------
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        profileAlert.textContent = '';
+        profileAlert.classList.remove('is-visible');
+
+        const name = nameInput.value.trim();
+        const phone = phoneInput.value.trim();
+
+        if (!name || name.length < 2) {
+          profileAlert.textContent = 'Full name must be at least 2 characters long.';
+          profileAlert.classList.add('is-visible');
+          nameInput.focus();
+          return;
+        }
+
+        saveProfileBtn.disabled = true;
+        const origText = saveProfileBtn.textContent;
+        saveProfileBtn.textContent = 'Saving...';
+
+        try {
+          const res = await apiRequest('/users/me', {
+            method: 'PUT',
+            body: JSON.stringify({ name, phone })
+          });
+
+          // Update sp_user in localStorage so header immediately reflects new name
+          if (res.user) {
+            localStorage.setItem('sp_user', JSON.stringify(res.user));
+          }
+
+          showToast('Profile updated successfully.', 'success');
+          // Update sidebar username display if present
+          const sidebarName = document.querySelector('.sidebar-user-name');
+          if (sidebarName && res.user && res.user.name) {
+            sidebarName.textContent = res.user.name;
+          }
+        } catch (err) {
+          profileAlert.textContent = err.message || 'Failed to update profile.';
+          profileAlert.classList.add('is-visible');
+        } finally {
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.textContent = origText;
+        }
+      });
+
+      // ----------------------------------------------------------------------
+      // Handle Password Form Submit
+      // ----------------------------------------------------------------------
+      passForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        passAlert.textContent = '';
+        passAlert.classList.remove('is-visible');
+
+        const currentPassword = curPassInput.value;
+        const newPassword = newPassInput.value;
+        const confirmPassword = confPassInput.value;
+
+        if (!currentPassword) {
+          passAlert.textContent = 'Please enter your current password.';
+          passAlert.classList.add('is-visible');
+          curPassInput.focus();
+          return;
+        }
+
+        if (!newPassword || newPassword.length < 8) {
+          passAlert.textContent = 'New password must be at least 8 characters long.';
+          passAlert.classList.add('is-visible');
+          newPassInput.focus();
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          passAlert.textContent = 'New password and confirmation password do not match.';
+          passAlert.classList.add('is-visible');
+          confPassInput.focus();
+          return;
+        }
+
+        savePassBtn.disabled = true;
+        const origText = savePassBtn.textContent;
+        savePassBtn.textContent = 'Updating...';
+
+        try {
+          await apiRequest('/users/me/password', {
+            method: 'PUT',
+            body: JSON.stringify({ currentPassword, newPassword })
+          });
+
+          showToast('Password updated successfully.', 'success');
+          passForm.reset();
+        } catch (err) {
+          passAlert.textContent = err.message || 'Failed to update password.';
+          passAlert.classList.add('is-visible');
+        } finally {
+          savePassBtn.disabled = false;
+          savePassBtn.textContent = origText;
+        }
+      });
+    } catch (err) {
+        console.error('Profile initialization error:', err);
+        const mount = document.getElementById('app-content') || document.body;
+        mount.innerHTML = '';
+
+        const errorWrap = document.createElement('div');
+        errorWrap.className = 'container';
+        errorWrap.style.padding = 'var(--space-8) var(--space-4)';
+
+        const card = document.createElement('div');
+        card.className = 'empty-state';
+        card.style.maxWidth = '600px';
+        card.style.margin = '0 auto';
+
+        const errTitle = document.createElement('h2');
+        errTitle.className = 'empty-state-title';
+        errTitle.textContent = 'Unable to Load Profile';
+
+        const errMsg = document.createElement('p');
+        errMsg.className = 'empty-state-text';
+        errMsg.textContent = err.message || 'An unexpected error occurred while initializing profile settings.';
+
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'btn-primary';
+        retryBtn.textContent = 'Retry';
+        retryBtn.addEventListener('click', () => {
+          window.location.reload();
+        });
+
+        card.appendChild(errTitle);
+        card.appendChild(errMsg);
+        card.appendChild(retryBtn);
+        errorWrap.appendChild(card);
+        mount.appendChild(errorWrap);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initProfile);
+  </script>
+</body>
+</html>

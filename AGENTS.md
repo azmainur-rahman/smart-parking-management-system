@@ -37,3 +37,10 @@
   - Clear `aria-label` attributes where contextual cues are required.
   - Visible, intentional keyboard focus states (`:focus-visible`).
   - No color-only status indicators (must include text, patterns, or shape labels).
+
+## 7. Frontend App Rules
+- API base URL lives only in `frontend/js/config.js`. Never hardcode URLs elsewhere.
+- All fetch calls go through `frontend/js/api.js`.
+- JWT stored in `localStorage` key `"sp_token"`; user object in `"sp_user"`.
+- Never trust client values for price, role, or payment status.
+- Every page reuses `navbar.css`, `global.css`, and its own page CSS.

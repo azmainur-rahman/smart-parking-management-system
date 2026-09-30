@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Parking Slots — Smart Parking</title>
+  <meta name="description" content="Operational slot management and maintenance overrides for facility managers.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/manager-shell.js"></script>
+
+  <script>
+    async function initManagerSlots() {
+      try {
+        const appContent = renderManagerShell('slots');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Inventory Management';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Parking Slots';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Inspect and modify the operational availability of bays across your assigned facilities.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // 2. Cascading Filter Bar (Location -> Floor -> Unit)
+        const filterGrid = document.createElement('div');
+        filterGrid.className = 'manager-filter-grid';
+
+        // Location Field
+        const locWrap = document.createElement('div');
+        locWrap.className = 'form-field';
+        const locLabel = document.createElement('label');
+        locLabel.className = 'form-label';
+        locLabel.textContent = '1. Select Facility *';
+        const locSelect = document.createElement('select');
+        locSelect.className = 'form-input';
+        locWrap.appendChild(locLabel);
+        locWrap.appendChild(locSelect);
+        filterGrid.appendChild(locWrap);
+
+        // Floor Field
+        const floorWrap = document.createElement('div');
+        floorWrap.className = 'form-field';
+        const floorLabel = document.createElement('label');
+        floorLabel.className = 'form-label';
+        floorLabel.textContent = '2. Floor / Level';
+        const floorSelect = document.createElement('select');
+        floorSelect.className = 'form-input';
+        floorSelect.disabled = true;
+        floorSelect.innerHTML = '<option value="">All Floors</option>';
+        floorWrap.appendChild(floorLabel);
+        floorWrap.appendChild(floorSelect);
+        filterGrid.appendChild(floorWrap);
+
+        // Unit Field
+        const unitWrap = document.createElement('div');
+        unitWrap.className = 'form-field';
+        const unitLabel = document.createElement('label');
+        unitLabel.className = 'form-label';
+        unitLabel.textContent = '3. Parking Unit / Zone';
+        const unitSelect = document.createElement('select');
+        unitSelect.className = 'form-input';
+        unitSelect.disabled = true;
+        unitSelect.innerHTML = '<option value="">All Units</option>';
+        unitWrap.appendChild(unitLabel);
+        unitWrap.appendChild(unitSelect);
+        filterGrid.appendChild(unitWrap);
+
+        appContent.appendChild(filterGrid);
+
+        // Legend
+        const legend = document.createElement('div');
+        legend.className = 'slot-legend';
+        legend.style.marginBottom = 'var(--space-4)';
+        legend.innerHTML = `
+          <div class="legend-item"><span class="legend-swatch swatch-available"></span><span>Available (Operational)</span></div>
+          <div class="legend-item"><span class="legend-swatch swatch-maintenance"></span><span>Maintenance (Closed)</span></div>
+          <div class="legend-item"><span class="legend-swatch swatch-booked"></span><span>Disabled (Offline)</span></div>
+        `;
+        appContent.appendChild(legend);
+
+        // 3. Slots Grid Container
+        const slotsContainer = document.createElement('div');
+        slotsContainer.id = 'manager-slots-grid-wrap';
+        appContent.appendChild(slotsContainer);
+
+        let assignedLocations = [];
+
+        // Load Assigned Locations
+        async function loadLocations() {
+          try {
+            const res = await apiRequest('/manager/locations');
+            assignedLocations = res.locations || [];
+            locSelect.innerHTML = '';
+
+            if (assignedLocations.length === 0) {
+              locSelect.innerHTML = '<option value="">No Assigned Facilities</option>';
+              slotsContainer.innerHTML = '<p class="summary-detail-label">You are not currently assigned to manage any active parking locations.</p>';
+              return;
+            }
+
+            assignedLocations.forEach((loc, idx) => {
+              const opt = document.createElement('option');
+              opt.value = loc._id;
+              opt.textContent = `${loc.name} (${loc.address?.area || loc.address?.city || ''})`;
+              locSelect.appendChild(opt);
+            });
+
+            // Automatically select first location and cascade
+            await onLocationChanged();
+
+          } catch (err) {
+            console.error('Failed to load locations:', err);
+            slotsContainer.innerHTML = `<p class="summary-error-box">${err.message || 'Error loading facilities.'}</p>`;
+          }
+        }
+
+        // On Location Changed
+        async function onLocationChanged() {
+          const locId = locSelect.value;
+          floorSelect.innerHTML = '<option value="">All Floors</option>';
+          floorSelect.disabled = true;
+          unitSelect.innerHTML = '<option value="">All Units</option>';
+          unitSelect.disabled = true;
+
+          if (!locId) {
+            slotsContainer.innerHTML = '';
+            return;
+          }
+
+          try {
+            const floorsRes = await apiRequest(`/public/locations/${locId}/floors`);
+            const floors = floorsRes.floors || [];
+
+            floors.forEach((f) => {
+              const opt = document.createElement('option');
+              opt.value = f._id;
+              opt.textContent = `${f.name} (Level ${f.floorNumber})`;
+              floorSelect.appendChild(opt);
+            });
+            floorSelect.disabled = false;
+
+            await loadSlots();
+          } catch (err) {
+            console.error('Failed to load floors:', err);
+            await loadSlots();
+          }
+        }
+
+        // On Floor Changed
+        async function onFloorChanged() {
+          const floorId = floorSelect.value;
+          unitSelect.innerHTML = '<option value="">All Units</option>';
+          unitSelect.disabled = true;
+
+          if (!floorId) {
+            await loadSlots();
+            return;
+          }
+
+          try {
+            const unitsRes = await apiRequest(`/public/floors/${floorId}/units`);
+            const units = unitsRes.units || [];
+
+            units.forEach((u) => {
+              const opt = document.createElement('option');
+              opt.value = u._id;
+              opt.textContent = `${u.name} (${u.code})`;
+              unitSelect.appendChild(opt);
+            });
+            unitSelect.disabled = false;
+
+            await loadSlots();
+          } catch (err) {
+            console.error('Failed to load units:', err);
+            await loadSlots();
+          }
+        }
+
+        // Fetch & Render Slots
+        async function loadSlots() {
+          const locId = locSelect.value;
+          const floorId = floorSelect.value;
+          const unitId = unitSelect.value;
+
+          slotsContainer.innerHTML = '';
+          if (typeof loadingSkeleton === 'function') {
+            slotsContainer.appendChild(loadingSkeleton(4, 'card'));
+          }
+
+          try {
+            const params = new URLSearchParams();
+            if (locId) params.set('locationId', locId);
+            if (floorId) params.set('floorId', floorId);
+            if (unitId) params.set('unitId', unitId);
+
+            const res = await apiRequest(`/manager/slots?${params.toString()}`);
+            const slots = res.slots || [];
+
+            slotsContainer.innerHTML = '';
+
+            if (slots.length === 0) {
+              const empty = (typeof emptyState === 'function')
+                ? emptyState('No Parking Slots Configured', 'No bays were found for the selected zone filter.', '', '')
+                : document.createElement('p');
+              slotsContainer.appendChild(empty);
+              return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'slots-inventory-grid';
+
+            slots.forEach((slot) => {
+              const card = document.createElement('button');
+              card.type = 'button';
+              card.className = `manager-slot-card status-${slot.status.toLowerCase()}`;
+              card.setAttribute('aria-label', `Bay ${slot.slotNumber}, current status: ${slot.status}. Click to change status.`);
+
+              const num = document.createElement('div');
+              num.className = 'manager-slot-number';
+              num.textContent = slot.slotNumber;
+
+              const vTypes = document.createElement('div');
+              vTypes.className = 'summary-detail-label';
+              vTypes.style.fontSize = '0.6875rem';
+              vTypes.textContent = (slot.vehicleTypes || []).join(', ') || 'CAR';
+
+              const statusLbl = document.createElement('div');
+              statusLbl.className = 'manager-slot-status-label';
+              statusLbl.textContent = slot.status;
+
+              card.appendChild(num);
+              card.appendChild(vTypes);
+              card.appendChild(statusLbl);
+
+              card.addEventListener('click', () => openSlotStatusModal(slot));
+              grid.appendChild(card);
+            });
+
+            slotsContainer.appendChild(grid);
+
+          } catch (err) {
+            console.error('Failed to load slots:', err);
+            slotsContainer.innerHTML = `<p class="summary-error-box">${err.message || 'Error loading parking slots.'}</p>`;
+          }
+        }
+
+        // Modal for Updating Slot Status
+        function openSlotStatusModal(slot) {
+          const form = document.createElement('form');
+          form.className = 'summary-details-list';
+
+          const desc = document.createElement('p');
+          desc.style.marginBottom = 'var(--space-3)';
+          desc.textContent = `Current status for Bay ${slot.slotNumber} is ${slot.status}. Choose a new operational status to override bay availability:`;
+          form.appendChild(desc);
+
+          const field = document.createElement('div');
+          field.className = 'form-field';
+
+          const label = document.createElement('label');
+          label.className = 'form-label';
+          label.textContent = 'Operational Status *';
+
+          const select = document.createElement('select');
+          select.className = 'form-input';
+          select.innerHTML = `
+            <option value="AVAILABLE" ${slot.status === 'AVAILABLE' ? 'selected' : ''}>AVAILABLE — Ready for Public Reservation</option>
+            <option value="MAINTENANCE" ${slot.status === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE — Under Repair / Cleaning</option>
+            <option value="DISABLED" ${slot.status === 'DISABLED' ? 'selected' : ''}>DISABLED — Temporarily Offline / Closed</option>
+          `;
+
+          field.appendChild(label);
+          field.appendChild(select);
+          form.appendChild(field);
+
+          const actions = document.createElement('div');
+          actions.style.display = 'flex';
+          actions.style.gap = 'var(--space-2)';
+          actions.style.marginTop = 'var(--space-4)';
+
+          const submitBtn = document.createElement('button');
+          submitBtn.type = 'button';
+          submitBtn.className = 'btn-row-action primary';
+          submitBtn.style.flex = '1';
+          submitBtn.textContent = 'Update Status';
+
+          actions.appendChild(submitBtn);
+          form.appendChild(actions);
+
+          let modalHandle = null;
+          submitBtn.addEventListener('click', async () => {
+            const newStatus = select.value;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            try {
+              const res = await apiRequest(`/manager/slots/${slot._id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: newStatus })
+              });
+
+              if (typeof showToast === 'function') {
+                showToast(res.message || `Bay ${slot.slotNumber} updated to ${newStatus}.`, 'success');
+              }
+              if (modalHandle && typeof modalHandle.close === 'function') {
+                modalHandle.close();
+              }
+              loadSlots();
+            } catch (err) {
+              console.error('Update slot error:', err);
+              if (typeof showToast === 'function') {
+                showToast(err.message || 'Failed to update slot status.', 'error');
+              } else {
+                alert(err.message || 'Failed to update slot status.');
+              }
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Update Status';
+            }
+          });
+
+          if (typeof openModal === 'function') {
+            modalHandle = openModal(form, { title: `Manage Slot ${slot.slotNumber}` });
+          }
+        }
+
+        // Listeners
+        locSelect.addEventListener('change', onLocationChanged);
+        floorSelect.addEventListener('change', onFloorChanged);
+        unitSelect.addEventListener('change', loadSlots);
+
+        await loadLocations();
+
+      } catch (err) {
+        console.error('Init manager slots error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initManagerSlots();
+    });
+  </script>
+</body>
+</html>

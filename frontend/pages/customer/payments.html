@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment History — Smart Parking</title>
+  <meta name="description" content="Review your payment transactions, gateway settlements, and billing history.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/shell.js"></script>
+
+  <script>
+    async function initPaymentsPage() {
+      try {
+        const appContent = renderShell('payments');
+        if (!appContent) return;
+
+        // 1. Page Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Billing & Transactions';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Payment History';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Inspect all transaction settlements, gateway reference IDs, and payment verification receipts.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // 2. Payments Content Container
+        const contentWrap = document.createElement('div');
+        contentWrap.id = 'payments-list-container';
+        appContent.appendChild(contentWrap);
+
+        // Loading indicator
+        if (typeof loadingSkeleton === 'function') {
+          contentWrap.appendChild(loadingSkeleton(3, 'table'));
+        } else {
+          const p = document.createElement('p');
+          p.className = 'summary-detail-label';
+          p.textContent = 'Loading payment transactions...';
+          contentWrap.appendChild(p);
+        }
+
+        try {
+          const res = await apiRequest('/payments');
+          const payments = res.payments || [];
+          contentWrap.innerHTML = '';
+
+          if (payments.length === 0) {
+            const empty = (typeof emptyState === 'function')
+              ? emptyState(
+                  'No Payment Records Found',
+                  'You have not completed any payments yet. Reserved bays will appear here once checked out.',
+                  'Find Parking',
+                  '../parking.html'
+                )
+              : document.createElement('div');
+            contentWrap.appendChild(empty);
+            return;
+          }
+
+          // Desktop Table View (>= 768px)
+          const tableWrap = document.createElement('div');
+          tableWrap.className = 'data-table-container';
+
+          const table = document.createElement('table');
+          table.className = 'data-table';
+
+          const thead = document.createElement('thead');
+          thead.innerHTML = `
+            <tr>
+              <th scope="col">Transaction ID</th>
+              <th scope="col">Booking</th>
+              <th scope="col">Date</th>
+              <th scope="col">Gateway</th>
+              <th scope="col">Amount</th>
+              <th scope="col" style="text-align: right;">Status</th>
+            </tr>
+          `;
+          table.appendChild(thead);
+
+          const tbody = document.createElement('tbody');
+
+          // Mobile Stacked Cards List (< 768px)
+          const cardsList = document.createElement('div');
+          cardsList.className = 'stacked-cards-list';
+
+          payments.forEach((p) => {
+            const dateObj = new Date(p.paidAt || p.createdAt);
+            const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // --- Desktop Row ---
+            const tr = document.createElement('tr');
+
+            // 1. Transaction ID
+            const tdTxn = document.createElement('td');
+            const txnCode = document.createElement('strong');
+            txnCode.className = 'receipt-value font-mono';
+            txnCode.style.fontSize = '0.8125rem';
+            txnCode.textContent = p.transactionId || '—';
+            tdTxn.appendChild(txnCode);
+            tr.appendChild(tdTxn);
+
+            // 2. Booking Ref
+            const tdBooking = document.createElement('td');
+            if (p.bookingId) {
+              const bLink = document.createElement('a');
+              bLink.href = `../booking-slip.html?id=${p.bookingId}`;
+              bLink.className = 'font-mono';
+              bLink.style.color = 'var(--color-ink)';
+              bLink.style.textDecoration = 'underline';
+              bLink.textContent = p.bookingNumber || p.bookingId;
+              tdBooking.appendChild(bLink);
+            } else {
+              tdBooking.textContent = p.bookingNumber || '—';
+            }
+            tr.appendChild(tdBooking);
+
+            // 3. Date
+            const tdDate = document.createElement('td');
+            tdDate.innerHTML = `
+              <div>${dateStr}</div>
+              <div class="summary-detail-label" style="font-size: 0.75rem;">${timeStr}</div>
+            `;
+            tr.appendChild(tdDate);
+
+            // 4. Gateway
+            const tdGateway = document.createElement('td');
+            tdGateway.textContent = p.gateway || 'MOCK';
+            tr.appendChild(tdGateway);
+
+            // 5. Amount
+            const tdAmount = document.createElement('td');
+            tdAmount.style.fontWeight = '600';
+            tdAmount.textContent = `৳${p.amount || 0}`;
+            tr.appendChild(tdAmount);
+
+            // 6. Status
+            const tdStatus = document.createElement('td');
+            tdStatus.style.textAlign = 'right';
+            if (typeof statusBadge === 'function') {
+              tdStatus.appendChild(statusBadge(p.status));
+            } else {
+              tdStatus.textContent = p.status;
+            }
+            tr.appendChild(tdStatus);
+
+            tbody.appendChild(tr);
+
+            // --- Mobile Card ---
+            const card = document.createElement('article');
+            card.className = 'stacked-card';
+
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'stacked-card-header';
+
+            const cardTxn = document.createElement('strong');
+            cardTxn.className = 'receipt-value font-mono';
+            cardTxn.style.fontSize = '0.8125rem';
+            cardTxn.textContent = p.transactionId || '—';
+
+            cardHeader.appendChild(cardTxn);
+            if (typeof statusBadge === 'function') {
+              cardHeader.appendChild(statusBadge(p.status));
+            }
+            card.appendChild(cardHeader);
+
+            const rBooking = createCardRow('Reservation', p.bookingNumber || '—');
+            const rDate = createCardRow('Date', `${dateStr} at ${timeStr}`);
+            const rGateway = createCardRow('Gateway', p.gateway || 'MOCK');
+            const rAmt = createCardRow('Amount', `৳${p.amount || 0}`);
+
+            card.appendChild(rBooking);
+            card.appendChild(rDate);
+            card.appendChild(rGateway);
+            card.appendChild(rAmt);
+
+            if (p.bookingId && p.status === 'SUCCESS') {
+              const cardActions = document.createElement('div');
+              cardActions.className = 'stacked-card-actions';
+              const slipLink = document.createElement('a');
+              slipLink.href = `../booking-slip.html?id=${p.bookingId}`;
+              slipLink.className = 'btn-row-action primary';
+              slipLink.textContent = 'View Receipt Slip';
+              cardActions.appendChild(slipLink);
+              card.appendChild(cardActions);
+            }
+
+            cardsList.appendChild(card);
+          });
+
+          table.appendChild(tbody);
+          tableWrap.appendChild(table);
+
+          contentWrap.appendChild(tableWrap);
+          contentWrap.appendChild(cardsList);
+
+        } catch (err) {
+          console.error('Failed to load payments:', err);
+          contentWrap.innerHTML = '';
+          const errP = document.createElement('p');
+          errP.className = 'summary-error-box';
+          errP.textContent = err.message || 'Error loading payment records.';
+          contentWrap.appendChild(errP);
+        }
+
+        function createCardRow(label, value) {
+          const row = document.createElement('div');
+          row.className = 'stacked-card-row';
+
+          const l = document.createElement('span');
+          l.className = 'stacked-card-label';
+          l.textContent = label;
+
+          const v = document.createElement('span');
+          v.className = 'summary-detail-value';
+          v.textContent = value;
+
+          row.appendChild(l);
+          row.appendChild(v);
+          return row;
+        }
+
+      } catch (err) {
+        console.error('Init payments page error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initPaymentsPage();
+    });
+  </script>
+</body>
+</html>

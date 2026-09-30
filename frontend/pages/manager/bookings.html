@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Reservations — Smart Parking</title>
+  <meta name="description" content="Search and inspect all customer reservations across assigned parking facilities.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/manager-shell.js"></script>
+
+  <script>
+    async function initManagerBookings() {
+      try {
+        const appContent = renderManagerShell('bookings');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Facility Reservations';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'All Bookings';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Search, filter, and inspect parking reservations across your authorized facilities.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // State
+        let selectedLocation = '';
+        let selectedStatus = '';
+        let selectedDate = '';
+        let searchQuery = '';
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // 2. Multi-Filter Toolbar
+        const filterCard = document.createElement('form');
+        filterCard.className = 'manager-filter-grid';
+        filterCard.setAttribute('role', 'search');
+        filterCard.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+
+        // Facility Dropdown
+        const locWrap = document.createElement('div');
+        locWrap.className = 'form-field';
+        const locLabel = document.createElement('label');
+        locLabel.className = 'form-label';
+        locLabel.textContent = 'Facility';
+        const locSelect = document.createElement('select');
+        locSelect.className = 'form-input';
+        locSelect.innerHTML = '<option value="">All Assigned Facilities</option>';
+        locWrap.appendChild(locLabel);
+        locWrap.appendChild(locSelect);
+        filterCard.appendChild(locWrap);
+
+        // Status Dropdown
+        const statusWrap = document.createElement('div');
+        statusWrap.className = 'form-field';
+        const statusLabel = document.createElement('label');
+        statusLabel.className = 'form-label';
+        statusLabel.textContent = 'Status';
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'form-input';
+        statusSelect.innerHTML = `
+          <option value="">All Statuses</option>
+          <option value="CONFIRMED">CONFIRMED</option>
+          <option value="ACTIVE">ACTIVE (Parked)</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+          <option value="PENDING_PAYMENT">PENDING PAYMENT</option>
+          <option value="EXPIRED">EXPIRED</option>
+        `;
+        statusWrap.appendChild(statusLabel);
+        statusWrap.appendChild(statusSelect);
+        filterCard.appendChild(statusWrap);
+
+        // Date Input
+        const dateWrap = document.createElement('div');
+        dateWrap.className = 'form-field';
+        const dateLabel = document.createElement('label');
+        dateLabel.className = 'form-label';
+        dateLabel.textContent = 'Date';
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.className = 'form-input';
+        dateWrap.appendChild(dateLabel);
+        dateWrap.appendChild(dateInput);
+        filterCard.appendChild(dateWrap);
+
+        // Search Input
+        const searchWrap = document.createElement('div');
+        searchWrap.className = 'form-field';
+        const searchLabel = document.createElement('label');
+        searchLabel.className = 'form-label';
+        searchLabel.textContent = 'Search Booking #';
+        const searchInput = document.createElement('input');
+        searchInput.type = 'search';
+        searchInput.className = 'form-input';
+        searchInput.placeholder = 'e.g. SP-2026...';
+        searchWrap.appendChild(searchLabel);
+        searchWrap.appendChild(searchInput);
+        filterCard.appendChild(searchWrap);
+
+        appContent.appendChild(filterCard);
+
+        // Filter Actions
+        const filterActionsRow = document.createElement('div');
+        filterActionsRow.style.display = 'flex';
+        filterActionsRow.style.gap = 'var(--space-2)';
+        filterActionsRow.style.marginBottom = 'var(--space-4)';
+
+        const applyBtn = document.createElement('button');
+        applyBtn.type = 'button';
+        applyBtn.className = 'btn-row-action primary';
+        applyBtn.textContent = 'Apply Filters';
+
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'btn-row-action';
+        resetBtn.textContent = 'Reset';
+
+        filterActionsRow.appendChild(applyBtn);
+        filterActionsRow.appendChild(resetBtn);
+        appContent.appendChild(filterActionsRow);
+
+        // 3. Table / Card Container
+        const listContainer = document.createElement('div');
+        listContainer.id = 'bookings-data-wrap';
+        appContent.appendChild(listContainer);
+
+        // 4. Pagination Bar
+        const paginationBar = document.createElement('div');
+        paginationBar.className = 'pagination-bar';
+        paginationBar.style.display = 'none';
+
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'pagination-info';
+
+        const controlsWrap = document.createElement('div');
+        controlsWrap.className = 'pagination-controls';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'btn-page-nav';
+        prevBtn.textContent = 'Previous';
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'btn-page-nav';
+        nextBtn.textContent = 'Next';
+
+        controlsWrap.appendChild(prevBtn);
+        controlsWrap.appendChild(nextBtn);
+        paginationBar.appendChild(pageInfo);
+        paginationBar.appendChild(controlsWrap);
+        appContent.appendChild(paginationBar);
+
+        // Load Assigned Facilities into dropdown
+        async function loadFacilitiesDropdown() {
+          try {
+            const locRes = await apiRequest('/manager/locations');
+            const locations = locRes.locations || [];
+            locations.forEach((loc) => {
+              const opt = document.createElement('option');
+              opt.value = loc._id;
+              opt.textContent = `${loc.name} (${loc.address?.area || loc.address?.city || ''})`;
+              locSelect.appendChild(opt);
+            });
+          } catch (e) {
+            console.error('Failed to load facilities dropdown:', e);
+          }
+        }
+
+        // Fetch & Render Bookings
+        async function fetchBookings() {
+          listContainer.innerHTML = '';
+          paginationBar.style.display = 'none';
+
+          if (typeof loadingSkeleton === 'function') {
+            listContainer.appendChild(loadingSkeleton(4, 'table'));
+          }
+
+          try {
+            const params = new URLSearchParams();
+            if (selectedLocation) params.set('locationId', selectedLocation);
+            if (selectedStatus) params.set('status', selectedStatus);
+            if (selectedDate) params.set('date', selectedDate);
+            if (searchQuery) params.set('q', searchQuery);
+            params.set('page', currentPage);
+            params.set('limit', pageSize);
+
+            const res = await apiRequest(`/manager/bookings?${params.toString()}`);
+            const bookings = res.bookings || [];
+            const total = res.total || 0;
+            const totalPages = res.totalPages || 1;
+
+            listContainer.innerHTML = '';
+
+            if (bookings.length === 0) {
+              const empty = (typeof emptyState === 'function')
+                ? emptyState(
+                    'No Matching Reservations',
+                    'No bookings found for the selected facility filters or query. Try resetting your criteria.',
+                    'Clear Filters',
+                    '#clear'
+                  )
+                : document.createElement('p');
+              
+              const clrBtn = empty.querySelector('.empty-state-btn');
+              if (clrBtn) {
+                clrBtn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  resetFilters();
+                });
+              }
+              listContainer.appendChild(empty);
+              return;
+            }
+
+            // Desktop Table
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'data-table-container';
+
+            const table = document.createElement('table');
+            table.className = 'data-table';
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th scope="col">Booking</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Vehicle</th>
+                  <th scope="col">Location &amp; Bay</th>
+                  <th scope="col">Schedule</th>
+                  <th scope="col">Payment</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            // Mobile Cards List
+            const cardsList = document.createElement('div');
+            cardsList.className = 'stacked-cards-list';
+
+            bookings.forEach((b) => {
+              const sDate = new Date(b.startTime);
+              const eDate = new Date(b.endTime);
+
+              // 1. Table Row
+              const tr = document.createElement('tr');
+
+              const tdBNum = document.createElement('td');
+              tdBNum.innerHTML = `
+                <strong class="receipt-value font-mono">${b.bookingNumber || b._id}</strong>
+                <span class="summary-detail-label" style="display:block; font-size:0.75rem;">${new Date(b.createdAt).toLocaleDateString()}</span>
+              `;
+              tr.appendChild(tdBNum);
+
+              const tdCust = document.createElement('td');
+              tdCust.innerHTML = `
+                <div>${b.userId ? b.userId.name : '—'}</div>
+                <div class="summary-detail-label" style="font-size:0.75rem;">${b.userId ? (b.userId.phone || b.userId.email) : ''}</div>
+              `;
+              tr.appendChild(tdCust);
+
+              const tdVeh = document.createElement('td');
+              tdVeh.innerHTML = `
+                <div>${b.vehicleId ? `${b.vehicleId.brand} ${b.vehicleId.model}` : '—'}</div>
+                <div class="receipt-value font-mono" style="font-size:0.75rem;">${b.vehicleId ? b.vehicleId.registrationNumber : ''}</div>
+              `;
+              tr.appendChild(tdVeh);
+
+              const tdLoc = document.createElement('td');
+              const locName = b.locationId ? b.locationId.name : 'Facility';
+              const slotNum = b.slotId ? `Bay ${b.slotId.slotNumber}` : '';
+              tdLoc.textContent = `${locName} — ${slotNum}`;
+              tr.appendChild(tdLoc);
+
+              const tdTime = document.createElement('td');
+              tdTime.innerHTML = `
+                <div>${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+                <div class="summary-detail-label" style="font-size:0.75rem;">${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${eDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+              `;
+              tr.appendChild(tdTime);
+
+              const tdPay = document.createElement('td');
+              tdPay.innerHTML = `
+                <strong style="display:block;">৳${b.totalAmount || 0}</strong>
+                <span class="summary-detail-label" style="font-size:0.75rem;">${b.paymentStatus || 'PENDING'}</span>
+              `;
+              tr.appendChild(tdPay);
+
+              const tdStatus = document.createElement('td');
+              if (typeof statusBadge === 'function') {
+                tdStatus.appendChild(statusBadge(b.bookingStatus));
+              } else {
+                tdStatus.textContent = b.bookingStatus;
+              }
+              tr.appendChild(tdStatus);
+
+              const tdAction = document.createElement('td');
+              tdAction.style.textAlign = 'right';
+              const inspectBtn = document.createElement('button');
+              inspectBtn.type = 'button';
+              inspectBtn.className = 'btn-row-action';
+              inspectBtn.textContent = 'Details';
+              inspectBtn.addEventListener('click', () => showBookingDetailsModal(b));
+              tdAction.appendChild(inspectBtn);
+              tr.appendChild(tdAction);
+
+              tbody.appendChild(tr);
+
+              // 2. Mobile Card
+              const card = document.createElement('article');
+              card.className = 'stacked-card';
+
+              const cardHead = document.createElement('div');
+              cardHead.className = 'stacked-card-header';
+              cardHead.innerHTML = `<strong class="receipt-value font-mono">${b.bookingNumber || b._id}</strong>`;
+              if (typeof statusBadge === 'function') {
+                cardHead.appendChild(statusBadge(b.bookingStatus));
+              }
+              card.appendChild(cardHead);
+
+              card.appendChild(createRow('Customer', b.userId ? `${b.userId.name} (${b.userId.phone || ''})` : '—'));
+              card.appendChild(createRow('Vehicle', b.vehicleId ? `${b.vehicleId.brand} ${b.vehicleId.model} (${b.vehicleId.registrationNumber})` : '—'));
+              card.appendChild(createRow('Facility & Bay', `${locName} — ${slotNum}`));
+              card.appendChild(createRow('Schedule', `${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`));
+              card.appendChild(createRow('Amount', `৳${b.totalAmount || 0} (${b.paymentStatus})`));
+
+              const cardActions = document.createElement('div');
+              cardActions.className = 'stacked-card-actions';
+              const cardBtn = document.createElement('button');
+              cardBtn.type = 'button';
+              cardBtn.className = 'btn-row-action';
+              cardBtn.textContent = 'Inspect Details';
+              cardBtn.addEventListener('click', () => showBookingDetailsModal(b));
+              cardActions.appendChild(cardBtn);
+              card.appendChild(cardActions);
+
+              cardsList.appendChild(card);
+            });
+
+            tableWrap.appendChild(table);
+            listContainer.appendChild(tableWrap);
+            listContainer.appendChild(cardsList);
+
+            // Pagination Controls
+            paginationBar.style.display = 'flex';
+            const startIdx = (currentPage - 1) * pageSize + 1;
+            const endIdx = Math.min(currentPage * pageSize, total);
+            pageInfo.textContent = `Showing ${startIdx}–${endIdx} of ${total} reservations`;
+
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+
+          } catch (err) {
+            console.error('Failed to fetch manager bookings:', err);
+            listContainer.innerHTML = '';
+            const errP = document.createElement('p');
+            errP.className = 'summary-error-box';
+            errP.textContent = err.message || 'Error loading reservations.';
+            listContainer.appendChild(errP);
+          }
+        }
+
+        function createRow(label, value) {
+          const r = document.createElement('div');
+          r.className = 'stacked-card-row';
+          const l = document.createElement('span');
+          l.className = 'stacked-card-label';
+          l.textContent = label;
+          const v = document.createElement('span');
+          v.className = 'summary-detail-value';
+          v.textContent = value;
+          r.appendChild(l);
+          r.appendChild(v);
+          return r;
+        }
+
+        // Details Modal
+        function showBookingDetailsModal(b) {
+          const modalBody = document.createElement('div');
+          modalBody.className = 'summary-details-list';
+          modalBody.style.fontSize = '0.875rem';
+
+          const sDate = new Date(b.startTime);
+          const eDate = new Date(b.endTime);
+
+          const appendRow = (lbl, val) => {
+            const row = document.createElement('div');
+            row.className = 'summary-detail-row';
+            row.innerHTML = `<span class="summary-detail-label">${lbl}</span><span class="summary-detail-value">${val}</span>`;
+            modalBody.appendChild(row);
+          };
+
+          appendRow('Booking ID', b.bookingNumber || b._id);
+          appendRow('Booking Status', b.bookingStatus);
+          appendRow('Payment Status', b.paymentStatus);
+          appendRow('Customer Name', b.userId ? b.userId.name : '—');
+          appendRow('Customer Phone', b.userId ? (b.userId.phone || '—') : '—');
+          appendRow('Customer Email', b.userId ? (b.userId.email || '—') : '—');
+          appendRow('Vehicle Model', b.vehicleId ? `${b.vehicleId.brand} ${b.vehicleId.model}` : '—');
+          appendRow('Vehicle Reg No', b.vehicleId ? b.vehicleId.registrationNumber : '—');
+          appendRow('Vehicle Type', b.vehicleId ? b.vehicleId.vehicleType : '—');
+          appendRow('Facility', b.locationId ? b.locationId.name : '—');
+          appendRow('Floor & Unit', `${b.floorId?.name || ''} — ${b.unitId?.name || ''}`);
+          appendRow('Slot Number', b.slotId ? b.slotId.slotNumber : '—');
+          appendRow('Start Time', sDate.toLocaleString());
+          appendRow('End Time', eDate.toLocaleString());
+          appendRow('Total Fee', `৳${b.totalAmount || 0}`);
+          appendRow('Vehicle Entry Time', b.entryTime ? new Date(b.entryTime).toLocaleString() : 'Not Checked In');
+          appendRow('Entry Manager', b.entryManager ? b.entryManager.name : '—');
+          appendRow('Vehicle Exit Time', b.exitTime ? new Date(b.exitTime).toLocaleString() : 'Not Checked Out');
+          appendRow('Exit Manager', b.exitManager ? b.exitManager.name : '—');
+
+          if (typeof openModal === 'function') {
+            openModal(modalBody, { title: `Reservation #${b.bookingNumber || b._id}` });
+          }
+        }
+
+        function resetFilters() {
+          locSelect.value = '';
+          statusSelect.value = '';
+          dateInput.value = '';
+          searchInput.value = '';
+          selectedLocation = '';
+          selectedStatus = '';
+          selectedDate = '';
+          searchQuery = '';
+          currentPage = 1;
+          fetchBookings();
+        }
+
+        applyBtn.addEventListener('click', () => {
+          selectedLocation = locSelect.value;
+          selectedStatus = statusSelect.value;
+          selectedDate = dateInput.value;
+          searchQuery = searchInput.value.trim();
+          currentPage = 1;
+          fetchBookings();
+        });
+
+        resetBtn.addEventListener('click', resetFilters);
+
+        prevBtn.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchBookings();
+          }
+        });
+
+        nextBtn.addEventListener('click', () => {
+          currentPage++;
+          fetchBookings();
+        });
+
+        // Initialize
+        await loadFacilitiesDropdown();
+        await fetchBookings();
+
+      } catch (err) {
+        console.error('Init manager bookings error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initManagerBookings();
+    });
+  </script>
+</body>
+</html>

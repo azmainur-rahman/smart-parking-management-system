@@ -1,0 +1,753 @@
+/* ==========================================================================
+   Smart Parking Management System — Booking, Payment & Success Stylesheet
+   Strictly Editorial: Hairline borders, generous whitespace, zero shadows/gradients.
+   Tokens only, mobile-first down to 320px, 44-48px touch targets, focus-visible.
+   ========================================================================== */
+
+/* Main Page Layout */
+.booking-page-main {
+  padding-block: var(--space-6) var(--space-8);
+  min-height: 75vh;
+}
+
+.booking-header {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.booking-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-1);
+}
+
+.booking-title {
+  font-size: clamp(1.875rem, 3.5vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: var(--space-2);
+}
+
+.booking-desc {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+}
+
+/* 2-Column Responsive Layout: Steps on Left, Sticky Summary on Right */
+.booking-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .booking-layout-grid {
+    grid-template-columns: 1.7fr 1fr;
+    gap: var(--space-7);
+  }
+}
+
+/* Numbered Steps Section */
+.booking-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.booking-step-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-5);
+}
+
+.booking-step-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.step-heading {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+/* Form Fields inside Steps */
+.step-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .step-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .step-form-grid.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.computed-schedule-banner {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.computed-schedule-banner strong {
+  font-weight: 600;
+}
+
+/* Vehicle Selection Box */
+.vehicle-selector-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.vehicle-meta-pill {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  margin-top: var(--space-1);
+}
+
+/* ==========================================================================
+   Slot Map Components
+   ========================================================================== */
+.slot-map-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  gap: var(--space-2);
+}
+
+.btn-refresh-map {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-refresh-map:hover {
+  border-color: var(--color-ink);
+}
+
+.btn-refresh-map:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Entry Marker */
+.map-entry-indicator {
+  text-align: center;
+  padding: var(--space-2);
+  margin-bottom: var(--space-4);
+  border: 1px dashed var(--color-border);
+  background-color: var(--color-paper);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Slot Grid */
+.slot-grid-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background-color: #FAFAF7;
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+}
+
+.slot-row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .slot-row-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 640px) {
+  .slot-row-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Driveway divider */
+.driveway-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  margin-block: var(--space-2);
+  background-color: #EBE8E0;
+  border-block: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  user-select: none;
+}
+
+/* Individual Slot Button (44px min touch target) */
+.slot-btn {
+  min-height: 72px;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.slot-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  z-index: 2;
+}
+
+.slot-btn-number {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.slot-btn-status {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Slot States without relying on color alone */
+/* 1. Available: Solid hairline border */
+.slot-btn--available {
+  border: 1px solid var(--color-ink);
+  color: var(--color-ink);
+  background-color: #FFFFFF;
+}
+
+.slot-btn--available:hover {
+  background-color: #F5F3EC;
+  border-width: 2px;
+}
+
+/* 2. Selected: Solid thick border and ink filled background */
+.slot-btn--selected {
+  border: 2px solid var(--color-ink);
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+}
+
+.slot-btn--selected .slot-btn-status {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* 3. Booked: Dashed border with strike-through text */
+.slot-btn--booked {
+  border: 1px dashed var(--color-border);
+  background-color: #F8F7F2;
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.slot-btn--booked .slot-btn-number {
+  text-decoration: line-through;
+}
+
+/* 4. Unavailable / Maintenance: Dotted border */
+.slot-btn--maintenance,
+.slot-btn--disabled {
+  border: 1px dotted var(--color-border);
+  background-color: #EFECE5;
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+/* 5. Incompatible with selected vehicle */
+.slot-btn--incompatible {
+  border: 1px dotted #B0AAA0;
+  background-color: #F4F2EC;
+  color: #8C867C;
+  cursor: not-allowed;
+}
+
+/* Map Legend */
+.slot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend-swatch {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Swatches */
+.swatch-available {
+  border: 1px solid var(--color-ink);
+  background-color: #FFFFFF;
+}
+.swatch-selected {
+  border: 1px solid var(--color-ink);
+  background-color: var(--color-ink);
+}
+.swatch-booked {
+  border: 1px dashed var(--color-border);
+  background-color: #F8F7F2;
+}
+.swatch-maintenance {
+  border: 1px dotted var(--color-border);
+  background-color: #EFECE5;
+}
+.swatch-incompatible {
+  border: 1px dotted #B0AAA0;
+  background-color: #F4F2EC;
+}
+
+/* ==========================================================================
+   Summary Sidebar & Bottom Bar
+   ========================================================================== */
+.booking-summary-sidebar {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-5);
+}
+
+@media (min-width: 1024px) {
+  .booking-summary-sidebar {
+    position: sticky;
+    top: var(--space-6);
+  }
+}
+
+.summary-heading {
+  font-size: 1.25rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.summary-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: 0.875rem;
+}
+
+.summary-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.summary-detail-label {
+  color: var(--color-muted);
+}
+
+.summary-detail-value {
+  font-weight: 500;
+  color: var(--color-ink);
+  text-align: right;
+}
+
+/* Price Breakdown Section */
+.summary-pricing-block {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.price-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.price-breakdown-row.total-row {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.price-breakdown-row.total-row .total-amount {
+  font-size: 1.375rem;
+  font-family: var(--font-display);
+  color: var(--color-accent);
+}
+
+/* Submit Action Button (min 48px) */
+.btn-proceed-payment {
+  width: 100%;
+  min-height: 48px;
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  border: 1px solid var(--color-ink);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-proceed-payment:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-proceed-payment:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn-proceed-payment:disabled {
+  background-color: #EFECE5;
+  color: var(--color-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+/* Summary Error Message */
+.summary-error-box {
+  margin-top: var(--space-3);
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Payment & Verification Views
+   ========================================================================== */
+.payment-card-panel {
+  max-width: 640px;
+  margin-inline: auto;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-6);
+}
+
+.countdown-timer-box {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.countdown-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  margin-bottom: var(--space-1);
+}
+
+.countdown-digits {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  letter-spacing: 0.05em;
+}
+
+.mock-payment-box {
+  border: 1px solid var(--color-border);
+  padding: var(--space-5);
+  background-color: #FAF8F3;
+  margin-top: var(--space-6);
+}
+
+.mock-payment-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+  color: var(--color-ink);
+}
+
+.mock-buttons-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+@media (min-width: 480px) {
+  .mock-buttons-row {
+    flex-direction: row;
+  }
+  .mock-buttons-row button {
+    flex: 1;
+  }
+}
+
+.btn-simulate-success {
+  min-height: 48px;
+  background-color: #2D6A4F;
+  color: #FFFFFF;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-simulate-success:hover {
+  background-color: #1E4634;
+}
+
+.btn-simulate-fail {
+  min-height: 48px;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-simulate-fail:hover {
+  background-color: #FAF0EC;
+}
+
+.btn-cancel-hold {
+  min-height: 48px;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-cancel-hold:hover {
+  border-color: var(--color-ink);
+}
+
+/* Off-screen live region for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Payment Status and Alert Banners */
+.payment-alert-box {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.payment-alert-box.alert-error {
+  border-color: var(--color-accent);
+  background-color: #FAF0EC;
+  color: var(--color-accent);
+}
+
+.payment-alert-box.alert-warning {
+  border-color: #B0AAA0;
+  background-color: #F8F7F2;
+  color: var(--color-ink);
+}
+
+.payment-alert-box.alert-info {
+  border-color: var(--color-border);
+  background-color: #FFFFFF;
+  color: var(--color-ink);
+}
+
+.payment-expired-card {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.payment-expired-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+  color: var(--color-accent);
+}
+
+.payment-expired-desc {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  margin-bottom: var(--space-5);
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+/* ==========================================================================
+   Booking Success Confirmation Card
+   ========================================================================== */
+.success-page-panel {
+  max-width: 680px;
+  margin-inline: auto;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-6);
+}
+
+.success-header-block {
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.success-eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #2D6A4F;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.success-main-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin-bottom: var(--space-2);
+}
+
+.success-booking-number-badge {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  margin-top: var(--space-2);
+}
+
+.success-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  font-size: 0.9375rem;
+}
+
+.success-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px dotted var(--color-border);
+}
+
+.success-detail-row:last-child {
+  border-bottom: none;
+}
+
+.success-detail-label {
+  color: var(--color-muted);
+}
+
+.success-detail-value {
+  font-weight: 500;
+  color: var(--color-ink);
+  text-align: right;
+}
+
+.success-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-5);
+}
+
+@media (min-width: 480px) {
+  .success-actions-row {
+    flex-direction: row;
+  }
+  .success-actions-row .btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+

@@ -31,6 +31,8 @@ export const initiatePayment = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Payment session initiated successfully.',
+      gateway: session.gateway,
+      holdExpiresAt: session.holdExpiresAt,
       session
     });
   } catch (error) {
@@ -54,6 +56,16 @@ export const initiatePayment = async (req, res) => {
 // @route   POST /api/payments/success
 // @access  Private (requireAuth / Gateway IPN)
 export const paymentSuccess = async (req, res) => {
+  const paymentMode = process.env.PAYMENT_MODE || 'MOCK';
+  const nodeEnv = process.env.NODE_ENV || 'development';
+
+  if (paymentMode !== 'MOCK' || nodeEnv === 'production') {
+    return res.status(403).json({
+      success: false,
+      message: 'Forbidden: Mock payment verification is disabled in production or when PAYMENT_MODE is not MOCK.'
+    });
+  }
+
   const transactionId =
     req.body.transactionId ||
     req.body.tran_id ||
@@ -239,9 +251,47 @@ export const getPaymentByBooking = async (req, res) => {
   }
 };
 
+// @desc    Get all payment records for authenticated user
+// @route   GET /api/payments
+// @access  Private (requireAuth)
+export const getMyPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find({ userId: req.user._id })
+      .populate('bookingId', 'bookingNumber startTime endTime')
+      .sort({ createdAt: -1 });
+
+    const formattedPayments = payments.map((p) => ({
+      _id: p._id,
+      bookingId: p.bookingId ? p.bookingId._id : null,
+      bookingNumber: p.bookingId ? p.bookingId.bookingNumber : '—',
+      amount: p.amount,
+      currency: p.currency,
+      status: p.status,
+      transactionId: p.transactionId,
+      gateway: p.gateway,
+      paidAt: p.paidAt,
+      createdAt: p.createdAt
+    }));
+
+    return res.status(200).json({
+      success: true,
+      count: formattedPayments.length,
+      payments: formattedPayments
+    });
+  } catch (error) {
+    console.error('[Payment Controller] getMyPayments error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error retrieving payment transactions.'
+    });
+  }
+};
+
 export default {
   initiatePayment,
   paymentSuccess,
   paymentFailed,
-  getPaymentByBooking
+  getPaymentByBooking,
+  getMyPayments
 };
+

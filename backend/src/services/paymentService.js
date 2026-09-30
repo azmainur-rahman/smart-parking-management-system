@@ -25,8 +25,19 @@ export const initiatePayment = async (bookingId, userId) => {
     throw new Error('This booking is already paid and confirmed.');
   }
 
-  if (['CANCELLED', 'EXPIRED', 'COMPLETED'].includes(booking.bookingStatus)) {
+  if (['CANCELLED', 'EXPIRED', 'FAILED', 'COMPLETED'].includes(booking.bookingStatus)) {
     throw new Error(`Cannot pay for a booking that is ${booking.bookingStatus.toLowerCase()}.`);
+  }
+
+  // Reject expired booking hold
+  if (
+    booking.bookingStatus === 'PENDING_PAYMENT' &&
+    booking.holdExpiresAt &&
+    new Date(booking.holdExpiresAt) < new Date()
+  ) {
+    booking.bookingStatus = 'EXPIRED';
+    await booking.save();
+    throw new Error('Booking hold has expired. Please create a new reservation.');
   }
 
   // Generate unique transaction identifier for the payment gateway session
@@ -75,6 +86,7 @@ export const initiatePayment = async (bookingId, userId) => {
     currency: payment.currency,
     gateway: payment.gateway,
     status: payment.status,
+    holdExpiresAt: booking.holdExpiresAt,
     redirectUrl
   };
 };
@@ -105,6 +117,19 @@ export const verifyPayment = async (transactionId, status = 'SUCCESS', gatewayRe
   }
 
   if (status === 'SUCCESS') {
+    // Check if hold has expired
+    if (
+      booking.bookingStatus === 'EXPIRED' ||
+      (booking.bookingStatus === 'PENDING_PAYMENT' &&
+        booking.holdExpiresAt &&
+        new Date(booking.holdExpiresAt) < new Date())
+    ) {
+      booking.bookingStatus = 'EXPIRED';
+      payment.status = 'FAILED';
+      await Promise.all([booking.save(), payment.save()]);
+      throw new Error('Payment rejected: Booking hold has expired.');
+    }
+
     // Cross-verify amount matches booking totalAmount
     if (gatewayResponse.amount && Number(gatewayResponse.amount) !== payment.amount) {
       throw new Error('Payment verification failed: transaction amount mismatch.');
@@ -123,10 +148,10 @@ export const verifyPayment = async (transactionId, status = 'SUCCESS', gatewayRe
       slotNumber = slot.slotNumber;
     }
 
-    // 3. Update Booking to CONFIRMED + PAID & attach QR code string
+    // 3. Update Booking to CONFIRMED + PAID & attach QR code string (bookingNumber ONLY per spec section 24)
     booking.paymentStatus = 'PAID';
     booking.bookingStatus = 'CONFIRMED';
-    booking.qrCode = booking.generateQRPayload(slotNumber);
+    booking.qrCode = booking.bookingNumber;
     await booking.save();
 
     return { payment, booking };

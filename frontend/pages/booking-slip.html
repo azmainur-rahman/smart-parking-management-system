@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Receipt Slip — Smart Parking</title>
+  <meta name="description" content="Official electronic booking slip and verified parking bay reservation pass.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/slip.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Slip Landmark -->
+  <main id="main-content" class="slip-page-main">
+    <div class="container">
+      
+      <div class="slip-layout-wrapper">
+        
+        <!-- Loading State -->
+        <div id="slip-loading" style="text-align: center; padding: var(--space-6);">
+          <p class="receipt-label">Loading verified booking receipt...</p>
+        </div>
+
+        <!-- Error Card (Hidden by Default) -->
+        <div id="slip-error-card" class="receipt-container" style="display: none; text-align: center;">
+          <h1 class="receipt-brand-title" style="color: var(--color-accent);">Unable to Load Receipt</h1>
+          <p id="slip-error-text" class="receipt-label" style="margin-block: var(--space-3); color: var(--color-ink);">—</p>
+          <a href="customer/bookings.html" class="btn btn-secondary" style="display: inline-block; min-height: 44px; line-height: 42px; padding-inline: var(--space-4);">
+            View My Bookings
+          </a>
+        </div>
+
+        <!-- Receipt Slip View (Spec Section 23) -->
+        <article id="slip-content" class="receipt-container" style="display: none;" aria-label="Official Booking Receipt">
+          
+          <!-- Header -->
+          <header class="receipt-header">
+            <h1 class="receipt-brand-title">SMART PARKING</h1>
+            <p class="receipt-sub-title">BOOKING RECEIPT</p>
+          </header>
+
+          <!-- Details Rows -->
+          <section class="receipt-details-list" aria-labelledby="receipt-details-heading">
+            <h2 id="receipt-details-heading" class="sr-only">Reservation Information</h2>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Booking ID:</span>
+              <span id="slip-booking-id" class="receipt-value font-mono">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Customer:</span>
+              <span id="slip-customer" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Vehicle:</span>
+              <span id="slip-vehicle" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Registration:</span>
+              <span id="slip-registration" class="receipt-value font-mono">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Parking:</span>
+              <span id="slip-parking" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Floor:</span>
+              <span id="slip-floor" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Unit:</span>
+              <span id="slip-unit" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Slot:</span>
+              <span id="slip-slot" class="receipt-value highlight">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Date:</span>
+              <span id="slip-date" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row">
+              <span class="receipt-label">Time:</span>
+              <span id="slip-time" class="receipt-value">—</span>
+            </div>
+
+            <div class="receipt-row receipt-total-row">
+              <span class="receipt-label" style="font-weight: 600; color: var(--color-ink);">Amount:</span>
+              <span id="slip-amount" class="receipt-total-amount">৳0</span>
+            </div>
+
+            <div class="receipt-row" style="margin-top: var(--space-1);">
+              <span class="receipt-label">Payment:</span>
+              <span><span id="slip-payment-status" class="receipt-status-pill">PAID</span></span>
+            </div>
+          </section>
+
+          <!-- QR Code Block -->
+          <footer class="receipt-qr-section">
+            <div class="receipt-qr-wrap">
+              <img id="slip-qr-img" class="receipt-qr-img" src="" alt="Booking Verification QR Code">
+            </div>
+            <p class="receipt-qr-caption">Scan to verify booking</p>
+          </footer>
+
+        </article>
+
+        <!-- Actions Bar (Download PDF, Print, Share) -->
+        <div id="slip-actions" class="slip-actions-bar" style="display: none;">
+          <button type="button" id="btn-download-pdf" class="btn-slip-action btn-download-pdf">
+            Download PDF
+          </button>
+          <button type="button" id="btn-print-slip" class="btn-slip-action btn-print-slip">
+            Print
+          </button>
+          <button type="button" id="btn-share-slip" class="btn-slip-action btn-share-slip">
+            Share
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initBookingSlipPage() {
+      // 1. Auth Guard
+      if (typeof requireLogin === 'function') {
+        if (!requireLogin()) return;
+      }
+
+      // 2. Render Shared Chrome
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const bookingId = urlParams.get('id') || urlParams.get('bookingId');
+
+      if (!bookingId) {
+        window.location.href = 'customer/bookings.html';
+        return;
+      }
+
+      // DOM Elements
+      const loadingEl = document.getElementById('slip-loading');
+      const errorCard = document.getElementById('slip-error-card');
+      const errorText = document.getElementById('slip-error-text');
+      const slipContent = document.getElementById('slip-content');
+      const slipActions = document.getElementById('slip-actions');
+
+      const elBookingId = document.getElementById('slip-booking-id');
+      const elCustomer = document.getElementById('slip-customer');
+      const elVehicle = document.getElementById('slip-vehicle');
+      const elRegistration = document.getElementById('slip-registration');
+      const elParking = document.getElementById('slip-parking');
+      const elFloor = document.getElementById('slip-floor');
+      const elUnit = document.getElementById('slip-unit');
+      const elSlot = document.getElementById('slip-slot');
+      const elDate = document.getElementById('slip-date');
+      const elTime = document.getElementById('slip-time');
+      const elAmount = document.getElementById('slip-amount');
+      const elPaymentStatus = document.getElementById('slip-payment-status');
+      const elQrImg = document.getElementById('slip-qr-img');
+
+      const btnDownloadPdf = document.getElementById('btn-download-pdf');
+      const btnPrint = document.getElementById('btn-print-slip');
+      const btnShare = document.getElementById('btn-share-slip');
+
+      let currentBooking = null;
+
+      try {
+        // Fetch Booking Details & QR code in parallel
+        const [bookingRes, qrRes] = await Promise.all([
+          apiRequest(`/bookings/${bookingId}`),
+          apiRequest(`/bookings/${bookingId}/qr`)
+        ]);
+
+        const booking = bookingRes.booking;
+        currentBooking = booking;
+
+        if (!booking) {
+          throw new Error('Booking could not be found.');
+        }
+
+        if (booking.paymentStatus !== 'PAID') {
+          throw new Error(`Receipt slip is only available for paid bookings. Current payment status is ${booking.paymentStatus}.`);
+        }
+
+        // Populate Details strictly with textContent
+        elBookingId.textContent = booking.bookingNumber || booking._id;
+
+        const custName = (booking.userId && booking.userId.name)
+          ? booking.userId.name
+          : (typeof getUser === 'function' && getUser() ? getUser().name : 'Customer');
+        elCustomer.textContent = custName;
+
+        if (booking.vehicleId) {
+          const v = booking.vehicleId;
+          elVehicle.textContent = `${v.brand || ''} ${v.model || ''}`.trim() || 'Vehicle';
+          elRegistration.textContent = v.registrationNumber || '—';
+        } else {
+          elVehicle.textContent = 'Vehicle';
+          elRegistration.textContent = '—';
+        }
+
+        elParking.textContent = booking.locationId ? booking.locationId.name : 'Facility';
+        elFloor.textContent = booking.floorId ? booking.floorId.name : 'Floor';
+        elUnit.textContent = booking.unitId ? `${booking.unitId.name} (${booking.unitId.code || ''})` : 'Unit';
+        elSlot.textContent = booking.slotId ? booking.slotId.slotNumber : 'Allocated Bay';
+
+        const sDate = new Date(booking.startTime);
+        const eDate = new Date(booking.endTime);
+
+        elDate.textContent = sDate.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+
+        elTime.textContent = `${sDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })} - ${eDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })}`;
+
+        // In UI, format as ৳
+        elAmount.textContent = `৳${booking.totalAmount || 0}`;
+        elPaymentStatus.textContent = booking.paymentStatus || 'PAID';
+
+        // QR Code Image
+        if (qrRes && qrRes.dataUrl) {
+          elQrImg.src = qrRes.dataUrl;
+        }
+
+        loadingEl.style.display = 'none';
+        slipContent.style.display = 'block';
+        slipActions.style.display = 'flex';
+
+      } catch (err) {
+        console.error('Slip initialization error:', err);
+        loadingEl.style.display = 'none';
+        errorText.textContent = err.message || 'Unable to load booking slip.';
+        errorCard.style.display = 'block';
+        return;
+      }
+
+      // Download PDF Handler: Fetch blob with Bearer token
+      btnDownloadPdf.addEventListener('click', async () => {
+        if (!currentBooking) return;
+
+        btnDownloadPdf.disabled = true;
+        const origText = btnDownloadPdf.textContent;
+        btnDownloadPdf.textContent = 'Preparing PDF...';
+
+        try {
+          const token = localStorage.getItem('sp_token');
+          const pdfUrl = `${API_BASE_URL}/bookings/${currentBooking._id}/slip.pdf`;
+
+          const response = await fetch(pdfUrl, {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to download PDF.');
+          }
+
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = downloadUrl;
+          a.download = `booking-slip-${currentBooking.bookingNumber || currentBooking._id}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(downloadUrl);
+          document.body.removeChild(a);
+
+          if (typeof showToast === 'function') {
+            showToast('PDF downloaded successfully.', 'success');
+          }
+        } catch (err) {
+          console.error('PDF download error:', err);
+          if (typeof showToast === 'function') {
+            showToast(err.message || 'Could not download receipt PDF.', 'error');
+          } else {
+            alert(err.message || 'Could not download receipt PDF.');
+          }
+        } finally {
+          btnDownloadPdf.disabled = false;
+          btnDownloadPdf.textContent = origText;
+        }
+      });
+
+      // Print Handler: window.print()
+      btnPrint.addEventListener('click', () => {
+        window.print();
+      });
+
+      // Share Handler: navigator.share if available, else copy booking number with toast
+      btnShare.addEventListener('click', async () => {
+        if (!currentBooking) return;
+
+        const shareData = {
+          title: 'Smart Parking Booking Receipt',
+          text: `Smart Parking reservation #${currentBooking.bookingNumber} at ${elParking.textContent} (Bay ${elSlot.textContent})`,
+          url: window.location.href
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        } else {
+          try {
+            await navigator.clipboard.writeText(currentBooking.bookingNumber);
+            if (typeof showToast === 'function') {
+              showToast(`Booking ID ${currentBooking.bookingNumber} copied to clipboard.`, 'success');
+            } else {
+              alert(`Booking ID ${currentBooking.bookingNumber} copied to clipboard.`);
+            }
+          } catch (err) {
+            console.error('Clipboard copy error:', err);
+            if (typeof showToast === 'function') {
+              showToast('Could not copy booking number.', 'error');
+            }
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initBookingSlipPage();
+      } catch (err) {
+        console.error('Slip page init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

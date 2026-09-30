@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard — Smart Parking</title>
+  <meta name="description" content="Operational dashboard for parking facility managers and gate controllers.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/manager-shell.js"></script>
+
+  <script>
+    async function initManagerDashboard() {
+      try {
+        const appContent = renderManagerShell('dashboard');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Facility Operations';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Manager Dashboard';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Real-time overview of bay occupancy, gate check-ins, and daily revenue for your assigned facilities.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'manager-dashboard-container';
+        appContent.appendChild(container);
+
+        // Render Skeletons initially
+        if (typeof loadingSkeleton === 'function') {
+          container.appendChild(loadingSkeleton(4, 'card'));
+        }
+
+        async function loadDashboard() {
+          container.innerHTML = '';
+
+          try {
+            const res = await apiRequest('/manager/dashboard');
+            const data = res.dashboard || {};
+
+            // 2. Metrics Statistics Grid
+            const statGrid = document.createElement('section');
+            statGrid.className = 'stat-grid';
+            statGrid.setAttribute('aria-label', 'Key Facility Metrics');
+
+            // Today Bookings
+            statGrid.appendChild(createStatCard("Today's Bookings", data.todayBookings || 0, 'Reservations scheduled or created today'));
+
+            // Active Parking
+            statGrid.appendChild(createStatCard('Active Parking', data.activeParking || 0, 'Vehicles currently occupied in bays'));
+
+            // Available Slots
+            statGrid.appendChild(createStatCard('Available Slots', data.availableSlots || 0, 'Operational slots open for parking'));
+
+            // Today's Revenue
+            statGrid.appendChild(createStatCard("Today's Revenue", `৳${data.todayRevenue || 0}`, 'Settled payments captured today'));
+
+            container.appendChild(statGrid);
+
+            // 3. Assigned Locations Strip
+            const locSection = document.createElement('section');
+            locSection.style.marginBottom = 'var(--space-6)';
+
+            const locHeading = document.createElement('h2');
+            locHeading.className = 'section-title';
+            locHeading.style.fontSize = '1.125rem';
+            locHeading.textContent = 'Assigned Facilities';
+            locSection.appendChild(locHeading);
+
+            const facilitiesStrip = document.createElement('div');
+            facilitiesStrip.className = 'assigned-facilities-strip';
+
+            const assignedLocs = data.assignedLocations || [];
+            if (assignedLocs.length === 0) {
+              const noLoc = document.createElement('p');
+              noLoc.className = 'summary-detail-label';
+              noLoc.textContent = 'You have not been assigned to manage any active facilities yet.';
+              facilitiesStrip.appendChild(noLoc);
+            } else {
+              assignedLocs.forEach((loc) => {
+                const pill = document.createElement('div');
+                pill.className = 'facility-pill';
+
+                const nameStrong = document.createElement('strong');
+                nameStrong.textContent = loc.name;
+
+                const areaSpan = document.createElement('span');
+                areaSpan.className = 'summary-detail-label';
+                areaSpan.textContent = loc.address ? `(${loc.address.area || loc.address.city})` : '';
+
+                pill.appendChild(nameStrong);
+                pill.appendChild(areaSpan);
+                facilitiesStrip.appendChild(pill);
+              });
+            }
+
+            locSection.appendChild(facilitiesStrip);
+            container.appendChild(locSection);
+
+            // 4. Recent Bookings Section
+            const recentSection = document.createElement('section');
+            recentSection.setAttribute('aria-labelledby', 'recent-bookings-heading');
+
+            const recentHeader = document.createElement('div');
+            recentHeader.style.display = 'flex';
+            recentHeader.style.justifyContent = 'space-between';
+            recentHeader.style.alignItems = 'baseline';
+            recentHeader.style.marginBottom = 'var(--space-3)';
+
+            const recentTitle = document.createElement('h2');
+            recentTitle.id = 'recent-bookings-heading';
+            recentTitle.className = 'section-title';
+            recentTitle.style.fontSize = '1.125rem';
+            recentTitle.textContent = 'Recent Reservations';
+
+            const viewAllLink = document.createElement('a');
+            viewAllLink.href = 'bookings.html';
+            viewAllLink.className = 'btn-row-action';
+            viewAllLink.style.minHeight = '36px';
+            viewAllLink.textContent = 'View All Bookings';
+
+            recentHeader.appendChild(recentTitle);
+            recentHeader.appendChild(viewAllLink);
+            recentSection.appendChild(recentHeader);
+
+            const recentList = data.recentBookings || [];
+
+            if (recentList.length === 0) {
+              const empty = (typeof emptyState === 'function')
+                ? emptyState('No Recent Bookings', 'No customer reservations have been logged for your facilities.', '', '')
+                : document.createElement('p');
+              recentSection.appendChild(empty);
+            } else {
+              // Desktop Table
+              const tableWrap = document.createElement('div');
+              tableWrap.className = 'data-table-container';
+
+              const table = document.createElement('table');
+              table.className = 'data-table';
+              table.innerHTML = `
+                <thead>
+                  <tr>
+                    <th scope="col">Booking #</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Vehicle</th>
+                    <th scope="col">Location &amp; Bay</th>
+                    <th scope="col">Schedule</th>
+                    <th scope="col" style="text-align: right;">Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              `;
+              const tbody = table.querySelector('tbody');
+
+              // Mobile Stacked Cards
+              const cardsList = document.createElement('div');
+              cardsList.className = 'stacked-cards-list';
+
+              recentList.forEach((b) => {
+                // Table Row
+                const tr = document.createElement('tr');
+
+                const tdNum = document.createElement('td');
+                const bNumStrong = document.createElement('strong');
+                bNumStrong.className = 'receipt-value font-mono';
+                bNumStrong.textContent = b.bookingNumber || b._id;
+                tdNum.appendChild(bNumStrong);
+                tr.appendChild(tdNum);
+
+                const tdCust = document.createElement('td');
+                tdCust.textContent = b.userId ? b.userId.name : '—';
+                tr.appendChild(tdCust);
+
+                const tdVeh = document.createElement('td');
+                tdVeh.textContent = b.vehicleId ? `${b.vehicleId.brand} ${b.vehicleId.model} (${b.vehicleId.registrationNumber})` : '—';
+                tr.appendChild(tdVeh);
+
+                const tdLoc = document.createElement('td');
+                const locName = b.locationId ? b.locationId.name : 'Facility';
+                const slotNum = b.slotId ? `Bay ${b.slotId.slotNumber}` : '';
+                tdLoc.textContent = `${locName} ${slotNum}`;
+                tr.appendChild(tdLoc);
+
+                const tdSched = document.createElement('td');
+                const sDate = new Date(b.startTime);
+                tdSched.textContent = `${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                tr.appendChild(tdSched);
+
+                const tdStatus = document.createElement('td');
+                tdStatus.style.textAlign = 'right';
+                if (typeof statusBadge === 'function') {
+                  tdStatus.appendChild(statusBadge(b.bookingStatus));
+                } else {
+                  tdStatus.textContent = b.bookingStatus;
+                }
+                tr.appendChild(tdStatus);
+
+                tbody.appendChild(tr);
+
+                // Mobile Card
+                const card = document.createElement('article');
+                card.className = 'stacked-card';
+
+                const cardHead = document.createElement('div');
+                cardHead.className = 'stacked-card-header';
+                const cId = document.createElement('strong');
+                cId.className = 'receipt-value font-mono';
+                cId.textContent = b.bookingNumber || b._id;
+                cardHead.appendChild(cId);
+                if (typeof statusBadge === 'function') {
+                  cardHead.appendChild(statusBadge(b.bookingStatus));
+                }
+                card.appendChild(cardHead);
+
+                card.appendChild(createRow('Customer', b.userId ? b.userId.name : '—'));
+                card.appendChild(createRow('Vehicle', b.vehicleId ? `${b.vehicleId.brand} (${b.vehicleId.registrationNumber})` : '—'));
+                card.appendChild(createRow('Location', `${locName} ${slotNum}`));
+                card.appendChild(createRow('Schedule', `${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`));
+
+                cardsList.appendChild(card);
+              });
+
+              tableWrap.appendChild(table);
+              recentSection.appendChild(tableWrap);
+              recentSection.appendChild(cardsList);
+            }
+
+            container.appendChild(recentSection);
+
+          } catch (err) {
+            console.error('Failed to load manager dashboard:', err);
+            container.innerHTML = '';
+
+            const errorWrap = document.createElement('div');
+            errorWrap.className = 'empty-state';
+
+            const errTitle = document.createElement('h3');
+            errTitle.className = 'empty-state-title';
+            errTitle.textContent = 'Unable to Load Dashboard';
+
+            const errMsg = document.createElement('p');
+            errMsg.className = 'empty-state-text';
+            errMsg.textContent = err.message || 'Error communicating with manager API service.';
+
+            const retryBtn = document.createElement('button');
+            retryBtn.type = 'button';
+            retryBtn.className = 'btn-primary';
+            retryBtn.style.marginTop = 'var(--space-3)';
+            retryBtn.textContent = 'Retry';
+            retryBtn.addEventListener('click', loadDashboard);
+
+            errorWrap.appendChild(errTitle);
+            errorWrap.appendChild(errMsg);
+            errorWrap.appendChild(retryBtn);
+            container.appendChild(errorWrap);
+          }
+        }
+
+        function createStatCard(label, value, subtext) {
+          const card = document.createElement('div');
+          card.className = 'stat-card';
+
+          const lbl = document.createElement('span');
+          lbl.className = 'stat-card-label';
+          lbl.textContent = label;
+
+          const val = document.createElement('div');
+          val.className = 'stat-card-value';
+          val.textContent = value;
+
+          const sub = document.createElement('span');
+          sub.className = 'stat-card-sub';
+          sub.textContent = subtext;
+
+          card.appendChild(lbl);
+          card.appendChild(val);
+          card.appendChild(sub);
+          return card;
+        }
+
+        function createRow(label, value) {
+          const r = document.createElement('div');
+          r.className = 'stacked-card-row';
+
+          const l = document.createElement('span');
+          l.className = 'stacked-card-label';
+          l.textContent = label;
+
+          const v = document.createElement('span');
+          v.className = 'summary-detail-value';
+          v.textContent = value;
+
+          r.appendChild(l);
+          r.appendChild(v);
+          return r;
+        }
+
+        await loadDashboard();
+
+      } catch (err) {
+        console.error('Manager dashboard init error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initManagerDashboard();
+    });
+  </script>
+</body>
+</html>

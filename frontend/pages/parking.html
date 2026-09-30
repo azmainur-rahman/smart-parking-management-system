@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Parking Locations — Smart Parking</title>
+  <meta name="description" content="Discover verified parking facilities in Dhaka with real-time bay availability and transparent hourly pricing.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/parking.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content" class="parking-main">
+    <div class="container">
+      <!-- Page Header -->
+      <header class="parking-header">
+        <p class="parking-eyebrow">Available Facilities</p>
+        <h1 class="parking-title">Parking Directory & Availability</h1>
+        <p class="parking-desc">Browse secured multi-level facilities across Dhaka. Filter by schedule, duration, and vehicle classification to view guaranteed bays.</p>
+      </header>
+
+      <!-- Search & Filter Form -->
+      <section class="parking-search-card" aria-label="Search and Filter Parking Facilities">
+        <form id="parking-search-form" class="parking-search-form" novalidate>
+          <!-- Location / Query Input -->
+          <div class="parking-field">
+            <label for="search-q" class="parking-label">Location or Facility</label>
+            <input 
+              type="text" 
+              id="search-q" 
+              name="q" 
+              class="parking-input" 
+              placeholder="e.g. Gulshan, Panthapath, Dhanmondi">
+          </div>
+
+          <!-- Date Input -->
+          <div class="parking-field">
+            <label for="search-date" class="parking-label">Date *</label>
+            <input 
+              type="date" 
+              id="search-date" 
+              name="date" 
+              class="parking-input" 
+              required>
+          </div>
+
+          <!-- Start Time Input -->
+          <div class="parking-field">
+            <label for="search-time" class="parking-label">Start Time *</label>
+            <input 
+              type="time" 
+              id="search-time" 
+              name="time" 
+              class="parking-input" 
+              required>
+          </div>
+
+          <!-- Duration Select -->
+          <div class="parking-field">
+            <label for="search-duration" class="parking-label">Duration *</label>
+            <select id="search-duration" name="duration" class="parking-select" required>
+              <option value="1H">1 Hour</option>
+              <option value="2H" selected>2 Hours</option>
+              <option value="3H">3 Hours</option>
+              <option value="4H">4 Hours</option>
+              <option value="1D">1 Day</option>
+              <option value="2D">2 Days</option>
+              <option value="3D">3 Days</option>
+            </select>
+          </div>
+
+          <!-- Vehicle Type Select -->
+          <div class="parking-field">
+            <label for="search-vehicle-type" class="parking-label">Vehicle Type</label>
+            <select id="search-vehicle-type" name="vehicleType" class="parking-select">
+              <option value="">All Vehicle Types</option>
+              <option value="CAR" selected>Car</option>
+              <option value="MOTORCYCLE">Motorcycle</option>
+              <option value="SUV">SUV</option>
+              <option value="MICROBUS">Microbus</option>
+              <option value="PICKUP">Pickup</option>
+              <option value="VAN">Van</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="parking-field">
+            <button type="submit" id="search-submit-btn" class="parking-submit-btn">
+              Search Facilities
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Results Header & Active Filter Info -->
+      <section class="results-section" aria-labelledby="results-heading">
+        <div class="results-header-row">
+          <h2 id="results-heading" class="results-count">Available Facilities</h2>
+          <span id="results-filter-badge" class="results-filter-badge"></span>
+        </div>
+
+        <!-- Location Cards Grid Container -->
+        <div id="location-results-grid" class="location-grid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initParkingDirectory() {
+      // 1. Initialize Site Chrome Header & Footer
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      const form = document.getElementById('parking-search-form');
+      const qInput = document.getElementById('search-q');
+      const dateInput = document.getElementById('search-date');
+      const timeInput = document.getElementById('search-time');
+      const durationSelect = document.getElementById('search-duration');
+      const vehicleSelect = document.getElementById('search-vehicle-type');
+      const resultsGrid = document.getElementById('location-results-grid');
+      const resultsHeading = document.getElementById('results-heading');
+      const filterBadge = document.getElementById('results-filter-badge');
+
+      // 2. Set min date to today
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      dateInput.min = todayStr;
+
+      // 3. Prefill values from URL query string if provided
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialQ = urlParams.get('q') || '';
+      const initialDate = urlParams.get('date') || todayStr;
+      
+      // Default time: next whole hour
+      const nextHour = new Date(today.getTime() + 60 * 60 * 1000);
+      const defaultTimeStr = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+      const initialTime = urlParams.get('time') || defaultTimeStr;
+      const initialDuration = urlParams.get('duration') || '2H';
+      const initialVehicleType = urlParams.get('vehicleType') || 'CAR';
+
+      qInput.value = initialQ;
+      dateInput.value = initialDate < todayStr ? todayStr : initialDate;
+      timeInput.value = initialTime;
+      durationSelect.value = initialDuration;
+      vehicleSelect.value = initialVehicleType;
+
+      // 4. Time Window Calculator
+      function calculateWindow(dateStr, timeStr, durationStr) {
+        if (!dateStr || !timeStr) return null;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hours, minutes] = timeStr.split(':').map(Number);
+
+        const startDate = new Date(year, month - 1, day, hours, minutes || 0);
+        if (isNaN(startDate.getTime())) return null;
+
+        let durationMs = 2 * 60 * 60 * 1000;
+        if (durationStr.endsWith('H')) {
+          const h = parseInt(durationStr, 10) || 1;
+          durationMs = h * 60 * 60 * 1000;
+        } else if (durationStr.endsWith('D')) {
+          const d = parseInt(durationStr, 10) || 1;
+          durationMs = d * 24 * 60 * 60 * 1000;
+        }
+
+        const endDate = new Date(startDate.getTime() + durationMs);
+        return {
+          startDate,
+          endDate,
+          startTimeIso: startDate.toISOString(),
+          endTimeIso: endDate.toISOString()
+        };
+      }
+
+      // 5. Fetch & Render Locations
+      async function executeSearch() {
+        const q = qInput.value.trim();
+        const dateVal = dateInput.value;
+        const timeVal = timeInput.value;
+        const durationVal = durationSelect.value;
+        const vehicleVal = vehicleSelect.value;
+
+        // Validation: Date cannot be in past
+        if (dateVal && dateVal < todayStr) {
+          if (typeof showToast === 'function') {
+            showToast('Selected date cannot be in the past.', 'error');
+          }
+          dateInput.focus();
+          return;
+        }
+
+        const win = calculateWindow(dateVal, timeVal, durationVal);
+
+        // Update URL query parameters seamlessly without full reload
+        const newUrlParams = new URLSearchParams();
+        if (q) newUrlParams.set('q', q);
+        if (dateVal) newUrlParams.set('date', dateVal);
+        if (timeVal) newUrlParams.set('time', timeVal);
+        if (durationVal) newUrlParams.set('duration', durationVal);
+        if (vehicleVal) newUrlParams.set('vehicleType', vehicleVal);
+        window.history.replaceState({}, '', `${window.location.pathname}?${newUrlParams.toString()}`);
+
+        // Update active filter badge text
+        let filterSummary = [];
+        if (q) filterSummary.push(`Near "${q}"`);
+        if (dateVal && timeVal) filterSummary.push(`${dateVal} at ${timeVal} (${durationVal})`);
+        if (vehicleVal) filterSummary.push(vehicleVal);
+        filterBadge.textContent = filterSummary.length > 0 ? `Filtered: ${filterSummary.join(' • ')}` : 'Showing all locations';
+
+        // Render skeleton state
+        resultsGrid.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          resultsGrid.appendChild(loadingSkeleton(3, 'card'));
+        }
+
+        try {
+          // Construct API query
+          const apiParams = new URLSearchParams();
+          if (q) apiParams.set('q', q);
+          if (win) {
+            apiParams.set('startTime', win.startTimeIso);
+            apiParams.set('endTime', win.endTimeIso);
+          }
+          if (vehicleVal) apiParams.set('vehicleType', vehicleVal);
+
+          const res = await apiRequest(`/public/locations?${apiParams.toString()}`);
+          const locations = res.locations || [];
+
+          resultsGrid.innerHTML = '';
+          resultsHeading.textContent = `${locations.length} Facilit${locations.length === 1 ? 'y' : 'ies'} Found`;
+
+          if (locations.length === 0) {
+            const empty = emptyState(
+              'No Parking Facilities Found',
+              'We could not find any active facilities matching your schedule or criteria. Try modifying your search area or schedule window.',
+              'Reset Search Filters',
+              '#reset'
+            );
+            const resetBtn = empty.querySelector('.empty-state-btn');
+            if (resetBtn) {
+              resetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                qInput.value = '';
+                dateInput.value = todayStr;
+                timeInput.value = defaultTimeStr;
+                durationSelect.value = '2H';
+                vehicleSelect.value = 'CAR';
+                executeSearch();
+              });
+            }
+            resultsGrid.appendChild(empty);
+            return;
+          }
+
+          // Build Location Cards
+          locations.forEach((loc) => {
+            const card = document.createElement('article');
+            card.className = 'location-card';
+
+            // Image Container
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'location-card-image-wrap';
+            if (loc.images && loc.images.length > 0) {
+              const img = document.createElement('img');
+              img.className = 'location-card-img';
+              img.src = loc.images[0];
+              img.alt = `Parking bay view at ${loc.name}`;
+              img.loading = 'lazy';
+              imgWrap.appendChild(img);
+            } else {
+              const placeholder = document.createElement('div');
+              placeholder.className = 'location-card-placeholder';
+              placeholder.textContent = 'Facility Preview';
+              imgWrap.appendChild(placeholder);
+            }
+            card.appendChild(imgWrap);
+
+            // Card Body
+            const body = document.createElement('div');
+            body.className = 'location-card-body';
+
+            const area = document.createElement('p');
+            area.className = 'location-card-area';
+            area.textContent = loc.address ? `${loc.address.area}, ${loc.address.city}` : 'Dhaka';
+
+            const title = document.createElement('h3');
+            title.className = 'location-card-title';
+            title.textContent = loc.name;
+
+            const desc = document.createElement('p');
+            desc.className = 'location-card-desc';
+            desc.textContent = loc.description || 'Verified multi-level parking with automated space management.';
+
+            body.appendChild(area);
+            body.appendChild(title);
+            body.appendChild(desc);
+
+            // Card Meta (Available slots, From Price, Action button)
+            const meta = document.createElement('div');
+            meta.className = 'location-card-meta';
+
+            const statsRow = document.createElement('div');
+            statsRow.className = 'location-card-stats';
+
+            const slotsBadge = document.createElement('span');
+            const availCount = typeof loc.availableSlots === 'number' ? loc.availableSlots : loc.totalSlots;
+            slotsBadge.className = `location-slots-badge ${availCount > 0 ? 'is-available' : 'is-full'}`;
+            slotsBadge.textContent = availCount > 0 ? `${availCount} Available` : 'Fully Booked';
+
+            const priceTag = document.createElement('span');
+            priceTag.className = 'location-price-tag';
+            priceTag.textContent = `From ৳${loc.fromPrice || 30}/hr`;
+
+            statsRow.appendChild(slotsBadge);
+            statsRow.appendChild(priceTag);
+            meta.appendChild(statsRow);
+
+            // Details Link with preserved query parameters
+            const detailsParams = new URLSearchParams();
+            detailsParams.set('id', loc._id);
+            if (dateVal) detailsParams.set('date', dateVal);
+            if (timeVal) detailsParams.set('time', timeVal);
+            if (durationVal) detailsParams.set('duration', durationVal);
+            if (vehicleVal) detailsParams.set('vehicleType', vehicleVal);
+
+            const actionLink = document.createElement('a');
+            actionLink.className = 'location-card-action';
+            actionLink.href = `parking-details.html?${detailsParams.toString()}`;
+            actionLink.textContent = 'View Parking';
+
+            meta.appendChild(actionLink);
+            body.appendChild(meta);
+            card.appendChild(body);
+
+            resultsGrid.appendChild(card);
+          });
+        } catch (err) {
+          console.error('Failed to load parking locations:', err);
+          resultsGrid.innerHTML = '';
+
+          const errorWrap = document.createElement('div');
+          errorWrap.className = 'empty-state';
+
+          const errTitle = document.createElement('h3');
+          errTitle.className = 'empty-state-title';
+          errTitle.textContent = 'Unable to Load Locations';
+
+          const errMsg = document.createElement('p');
+          errMsg.className = 'empty-state-text';
+          errMsg.textContent = err.message || 'An error occurred while communicating with the parking network.';
+
+          const retryBtn = document.createElement('button');
+          retryBtn.type = 'button';
+          retryBtn.className = 'btn-primary';
+          retryBtn.textContent = 'Retry';
+          retryBtn.addEventListener('click', () => {
+            executeSearch();
+          });
+
+          errorWrap.appendChild(errTitle);
+          errorWrap.appendChild(errMsg);
+          errorWrap.appendChild(retryBtn);
+
+          resultsGrid.appendChild(errorWrap);
+        }
+      }
+
+      // Handle form submit
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        executeSearch();
+      });
+
+      // Initial search run
+      await executeSearch();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initParkingDirectory();
+      } catch (err) {
+        console.error('Directory init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserve Parking Slot — Smart Parking</title>
+  <meta name="description" content="Select your vehicle, choose an available parking bay on the live slot map, and review your reservation quote.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/booking.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Booking Landmark -->
+  <main id="main-content" class="booking-page-main">
+    <div class="container">
+      <!-- Page Header -->
+      <header class="booking-header">
+        <p class="booking-eyebrow">Reservation Workflow</p>
+        <h1 class="booking-title" id="booking-main-title">Configure Your Reservation</h1>
+        <p class="booking-desc" id="booking-facility-desc">Review your selected facility, assign your registered vehicle, and reserve an active parking bay.</p>
+      </header>
+
+      <!-- 2-Column Booking Layout Grid -->
+      <div class="booking-layout-grid">
+        <!-- Left Column: Numbered Workflow Steps -->
+        <div class="booking-steps-container">
+          
+          <!-- STEP 1: Schedule Configuration -->
+          <section class="booking-step-card" aria-labelledby="step-1-title">
+            <header class="booking-step-header">
+              <span class="step-number" aria-hidden="true">1</span>
+              <h2 id="step-1-title" class="step-heading">Schedule & Duration</h2>
+            </header>
+
+            <form id="schedule-form" class="step-form-grid grid-3" novalidate>
+              <div class="form-field">
+                <label for="booking-date" class="form-label">Date *</label>
+                <input type="date" id="booking-date" name="date" class="form-input" required>
+              </div>
+
+              <div class="form-field">
+                <label for="booking-time" class="form-label">Start Time *</label>
+                <input type="time" id="booking-time" name="time" class="form-input" required>
+              </div>
+
+              <div class="form-field">
+                <label for="booking-duration" class="form-label">Duration *</label>
+                <select id="booking-duration" name="duration" class="form-input" required>
+                  <option value="1H">1 Hour</option>
+                  <option value="2H">2 Hours</option>
+                  <option value="3H">3 Hours</option>
+                  <option value="4H">4 Hours</option>
+                  <option value="1D">1 Day</option>
+                  <option value="2D">2 Days</option>
+                  <option value="3D">3 Days</option>
+                </select>
+              </div>
+            </form>
+
+            <div id="computed-schedule-banner" class="computed-schedule-banner" aria-live="polite">
+              <!-- Computed start and end readable text -->
+            </div>
+          </section>
+
+          <!-- STEP 2: Vehicle Selection -->
+          <section class="booking-step-card" aria-labelledby="step-2-title">
+            <header class="booking-step-header">
+              <span class="step-number" aria-hidden="true">2</span>
+              <h2 id="step-2-title" class="step-heading">Select Registered Vehicle</h2>
+            </header>
+
+            <div id="vehicle-step-content" class="vehicle-selector-box">
+              <!-- Populated by JS -->
+            </div>
+          </section>
+
+          <!-- STEP 3: Slot Map -->
+          <section class="booking-step-card" aria-labelledby="step-3-title">
+            <div class="slot-map-header">
+              <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <span class="step-number" aria-hidden="true">3</span>
+                <h2 id="step-3-title" class="step-heading">Select Parking Bay</h2>
+              </div>
+              <button type="button" id="btn-refresh-map" class="btn-refresh-map" aria-label="Refresh slot map availability">
+                Refresh Map
+              </button>
+            </div>
+
+            <!-- Entry Marker -->
+            <div class="map-entry-indicator">
+              <span>FACILITY ENTRY &amp; ACCESS LANE</span>
+            </div>
+
+            <!-- Canvas for Grid & Slots -->
+            <div id="slot-map-canvas" class="slot-grid-canvas" role="region" aria-label="Interactive parking slot map">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Legend -->
+            <div class="slot-legend" aria-hidden="true">
+              <div class="legend-item">
+                <span class="legend-swatch swatch-available"></span>
+                <span>Available</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-swatch swatch-selected"></span>
+                <span>Selected</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-swatch swatch-booked"></span>
+                <span>Booked</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-swatch swatch-maintenance"></span>
+                <span>Maintenance</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-swatch swatch-incompatible"></span>
+                <span>Incompatible</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column: Reservation & Pricing Summary Sidebar -->
+        <aside class="booking-summary-sidebar" aria-labelledby="summary-heading">
+          <h2 id="summary-heading" class="summary-heading">Reservation Summary</h2>
+
+          <!-- Facility and Slot Details -->
+          <div class="summary-details-list">
+            <div class="summary-detail-row">
+              <span class="summary-detail-label">Facility</span>
+              <span id="sum-facility" class="summary-detail-value">—</span>
+            </div>
+            <div class="summary-detail-row">
+              <span class="summary-detail-label">Floor &amp; Unit</span>
+              <span id="sum-floor-unit" class="summary-detail-value">—</span>
+            </div>
+            <div class="summary-detail-row">
+              <span class="summary-detail-label">Parking Bay</span>
+              <span id="sum-slot" class="summary-detail-value">Not Selected</span>
+            </div>
+            <div class="summary-detail-row">
+              <span class="summary-detail-label">Vehicle</span>
+              <span id="sum-vehicle" class="summary-detail-value">Not Selected</span>
+            </div>
+            <div class="summary-detail-row">
+              <span class="summary-detail-label">Schedule</span>
+              <span id="sum-schedule" class="summary-detail-value">—</span>
+            </div>
+          </div>
+
+          <!-- Price Quote Breakdown (Server-Calculated) -->
+          <div class="summary-pricing-block" aria-live="polite" id="pricing-live-region">
+            <div class="price-breakdown-row">
+              <span class="summary-detail-label">Base Parking Rate</span>
+              <span id="sum-base-price" class="summary-detail-value">৳0</span>
+            </div>
+            <div class="price-breakdown-row">
+              <span class="summary-detail-label">Service Charge</span>
+              <span id="sum-service-charge" class="summary-detail-value">৳10</span>
+            </div>
+            <div class="price-breakdown-row total-row">
+              <span>Total Amount</span>
+              <span id="sum-total-amount" class="total-amount">৳0</span>
+            </div>
+          </div>
+
+          <!-- Proceed to Payment Action Button -->
+          <button type="button" id="btn-proceed-payment" class="btn-proceed-payment" disabled>
+            Proceed to Payment
+          </button>
+
+          <!-- Summary Error / Notice Region -->
+          <div id="summary-error-box" class="summary-error-box" role="alert" style="display: none;"></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initBookingPage() {
+      // 1. Route Protection Guard
+      if (typeof requireLogin === 'function') {
+        if (!requireLogin()) return;
+      }
+
+      // 2. Render Shared Chrome
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      // Query String Parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const unitId = urlParams.get('unitId');
+      const locationId = urlParams.get('locationId');
+      const floorId = urlParams.get('floorId');
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      // Form Elements
+      const dateInput = document.getElementById('booking-date');
+      const timeInput = document.getElementById('booking-time');
+      const durationSelect = document.getElementById('booking-duration');
+      const scheduleBanner = document.getElementById('computed-schedule-banner');
+      const vehicleStepContent = document.getElementById('vehicle-step-content');
+      const slotMapCanvas = document.getElementById('slot-map-canvas');
+      const btnRefreshMap = document.getElementById('btn-refresh-map');
+      const btnProceed = document.getElementById('btn-proceed-payment');
+      const summaryErrorBox = document.getElementById('summary-error-box');
+
+      // Summary Elements
+      const sumFacility = document.getElementById('sum-facility');
+      const sumFloorUnit = document.getElementById('sum-floor-unit');
+      const sumSlot = document.getElementById('sum-slot');
+      const sumVehicle = document.getElementById('sum-vehicle');
+      const sumSchedule = document.getElementById('sum-schedule');
+      const sumBasePrice = document.getElementById('sum-base-price');
+      const sumServiceCharge = document.getElementById('sum-service-charge');
+      const sumTotalAmount = document.getElementById('sum-total-amount');
+
+      // State
+      let selectedSlot = null;
+      let selectedVehicle = null;
+      let userVehicles = [];
+      let locationData = null;
+      let floorData = null;
+      let unitData = null;
+      let activeQuote = null;
+
+      // Initialize Schedule Inputs
+      dateInput.min = todayStr;
+      dateInput.value = urlParams.get('date') || todayStr;
+      if (dateInput.value < todayStr) dateInput.value = todayStr;
+
+      const nextHour = new Date(today.getTime() + 60 * 60 * 1000);
+      const defaultTimeStr = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+      timeInput.value = urlParams.get('time') || defaultTimeStr;
+
+      const initialDuration = (urlParams.get('duration') || '2H').toUpperCase();
+      durationSelect.value = ['1H', '2H', '3H', '4H', '1D', '2D', '3D'].includes(initialDuration) ? initialDuration : '2H';
+
+      // Time & Schedule Window Helpers
+      function getScheduleWindow() {
+        const dateStr = dateInput.value;
+        const timeStr = timeInput.value;
+        const durStr = durationSelect.value;
+
+        if (!dateStr || !timeStr) return null;
+
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const [hh, mm] = timeStr.split(':').map(Number);
+        const start = new Date(y, m - 1, d, hh, mm || 0);
+        if (isNaN(start.getTime())) return null;
+
+        const isHourly = durStr.endsWith('H');
+        const num = parseInt(durStr, 10) || 1;
+        const durationType = isHourly ? 'HOURLY' : 'DAILY';
+        const durationMs = isHourly ? num * 60 * 60 * 1000 : num * 24 * 60 * 60 * 1000;
+        const end = new Date(start.getTime() + durationMs);
+
+        return {
+          start,
+          end,
+          startTimeIso: start.toISOString(),
+          endTimeIso: end.toISOString(),
+          durationType,
+          duration: num
+        };
+      }
+
+      function updateScheduleDisplay() {
+        const win = getScheduleWindow();
+        if (!win) {
+          scheduleBanner.textContent = 'Please enter a valid date and start time.';
+          sumSchedule.textContent = '—';
+          return;
+        }
+
+        const startReadable = `${formatDate(win.start)}, ${formatTime(win.start)}`;
+        const endReadable = `${formatDate(win.end)}, ${formatTime(win.end)}`;
+
+        scheduleBanner.innerHTML = `Starts: <strong>${startReadable}</strong> • Ends: <strong>${endReadable}</strong> (${win.duration} ${win.durationType === 'HOURLY' ? 'Hour(s)' : 'Day(s)'})`;
+        sumSchedule.textContent = `${startReadable} – ${endReadable}`;
+      }
+
+      // 3. Load Facility, Floor, Unit Names for Context
+      async function loadContextData() {
+        try {
+          if (locationId) {
+            const locRes = await apiRequest(`/public/locations/${locationId}`);
+            locationData = locRes.location;
+            if (locationData && sumFacility) {
+              sumFacility.textContent = locationData.name;
+              document.getElementById('booking-main-title').textContent = `Reserve Space at ${locationData.name}`;
+            }
+          }
+          if (unitId) {
+            const unitRes = await apiRequest(`/public/floors/${floorId}/units`);
+            const units = unitRes.units || [];
+            unitData = units.find((u) => u._id === unitId);
+            if (unitData && sumFloorUnit) {
+              sumFloorUnit.textContent = `Unit ${unitData.code} (${unitData.name})`;
+            }
+          }
+        } catch (err) {
+          console.warn('Non-blocking context load warning:', err);
+        }
+      }
+
+      // 4. Load Active Vehicles
+      async function loadVehicles() {
+        vehicleStepContent.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          vehicleStepContent.appendChild(loadingSkeleton(1, 'card'));
+        }
+
+        try {
+          const res = await apiRequest('/vehicles');
+          userVehicles = (res.vehicles || []).filter((v) => v.status === 'ACTIVE');
+
+          vehicleStepContent.innerHTML = '';
+
+          if (userVehicles.length === 0) {
+            const empty = emptyState(
+              'No Active Vehicles Registered',
+              'You must register an active vehicle to reserve a parking bay.',
+              'Register a Vehicle',
+              `customer/vehicles.html?return=${encodeURIComponent(window.location.href)}`
+            );
+            vehicleStepContent.appendChild(empty);
+            btnProceed.disabled = true;
+            return;
+          }
+
+          // Build vehicle selection dropdown
+          const field = document.createElement('div');
+          field.className = 'form-field';
+
+          const label = document.createElement('label');
+          label.className = 'form-label';
+          label.htmlFor = 'vehicle-select';
+          label.textContent = 'Vehicle *';
+
+          const select = document.createElement('select');
+          select.id = 'vehicle-select';
+          select.className = 'form-input';
+
+          const metaDisplay = document.createElement('p');
+          metaDisplay.className = 'vehicle-meta-pill';
+
+          const preselectedType = urlParams.get('vehicleType');
+
+          userVehicles.forEach((veh, idx) => {
+            const opt = document.createElement('option');
+            opt.value = veh._id;
+            opt.textContent = `${veh.brand} ${veh.model} (${veh.registrationNumber}) — ${veh.vehicleType}`;
+            if (preselectedType && veh.vehicleType === preselectedType.toUpperCase()) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          });
+
+          function syncSelectedVehicle() {
+            const chosenId = select.value;
+            selectedVehicle = userVehicles.find((v) => v._id === chosenId) || userVehicles[0];
+            if (selectedVehicle) {
+              metaDisplay.textContent = `Classification: ${selectedVehicle.vehicleType} • Color: ${selectedVehicle.color}${selectedVehicle.nickname ? ` • "${selectedVehicle.nickname}"` : ''}`;
+              sumVehicle.textContent = `${selectedVehicle.brand} ${selectedVehicle.model} (${selectedVehicle.registrationNumber})`;
+            }
+          }
+
+          select.addEventListener('change', () => {
+            syncSelectedVehicle();
+            selectedSlot = null;
+            sumSlot.textContent = 'Not Selected';
+            fetchSlotMap();
+            fetchQuote();
+          });
+
+          field.appendChild(label);
+          field.appendChild(select);
+          field.appendChild(metaDisplay);
+          vehicleStepContent.appendChild(field);
+
+          syncSelectedVehicle();
+        } catch (err) {
+          console.error('Failed to load user vehicles:', err);
+          vehicleStepContent.innerHTML = '';
+          const empty = emptyState(
+            'Unable to Load Vehicles',
+            err.message || 'Server error loading your registered vehicles.',
+            'Retry',
+            '#retry-vehicles'
+          );
+          const rBtn = empty.querySelector('.empty-state-btn');
+          if (rBtn) {
+            rBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              loadVehicles();
+            });
+          }
+          vehicleStepContent.appendChild(empty);
+        }
+      }
+
+      // 5. Fetch & Render Slot Map
+      async function fetchSlotMap() {
+        if (!unitId) {
+          slotMapCanvas.innerHTML = '';
+          const empty = emptyState('No Unit Selected', 'Please navigate through parking details to select a specific unit.');
+          slotMapCanvas.appendChild(empty);
+          return;
+        }
+
+        const win = getScheduleWindow();
+        if (!win) return;
+
+        slotMapCanvas.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          slotMapCanvas.appendChild(loadingSkeleton(2, 'card'));
+        }
+
+        try {
+          const slotParams = new URLSearchParams();
+          slotParams.set('startTime', win.startTimeIso);
+          slotParams.set('endTime', win.endTimeIso);
+          if (selectedVehicle && selectedVehicle.vehicleType) {
+            slotParams.set('vehicleType', selectedVehicle.vehicleType);
+          }
+
+          const res = await apiRequest(`/public/units/${unitId}/slots?${slotParams.toString()}`);
+          const slots = res.slots || [];
+
+          slotMapCanvas.innerHTML = '';
+
+          if (slots.length === 0) {
+            const empty = emptyState('No Slots Found', 'No slots are configured for this unit.');
+            slotMapCanvas.appendChild(empty);
+            return;
+          }
+
+          // Build slots layout: 5 per row with Driveway divider after the first half
+          const halfIndex = Math.ceil(slots.length / 2);
+          const topSlots = slots.slice(0, halfIndex);
+          const bottomSlots = slots.slice(halfIndex);
+
+          function renderSlotRow(slotList) {
+            const row = document.createElement('div');
+            row.className = 'slot-row-grid';
+
+            slotList.forEach((s) => {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'slot-btn';
+              btn.dataset.slotId = s._id;
+              btn.setAttribute('aria-label', `Slot ${s.slotNumber}`);
+
+              const numSpan = document.createElement('span');
+              numSpan.className = 'slot-btn-number';
+              numSpan.textContent = s.slotNumber;
+
+              const statusSpan = document.createElement('span');
+              statusSpan.className = 'slot-btn-status';
+
+              // Map slot state
+              const state = s.state || 'AVAILABLE';
+              const isSelected = selectedSlot && selectedSlot._id === s._id;
+
+              if (isSelected) {
+                btn.classList.add('slot-btn--selected');
+                statusSpan.textContent = 'Selected';
+                btn.setAttribute('aria-pressed', 'true');
+              } else if (state === 'AVAILABLE') {
+                btn.classList.add('slot-btn--available');
+                statusSpan.textContent = 'Available';
+                btn.setAttribute('aria-pressed', 'false');
+              } else if (state === 'BOOKED') {
+                btn.classList.add('slot-btn--booked');
+                statusSpan.textContent = 'Booked';
+                btn.setAttribute('aria-disabled', 'true');
+              } else if (state === 'MAINTENANCE') {
+                btn.classList.add('slot-btn--maintenance');
+                statusSpan.textContent = 'Maintenance';
+                btn.setAttribute('aria-disabled', 'true');
+              } else if (state === 'INCOMPATIBLE') {
+                btn.classList.add('slot-btn--incompatible');
+                statusSpan.textContent = 'Not for your vehicle';
+                btn.setAttribute('aria-disabled', 'true');
+              } else {
+                btn.classList.add('slot-btn--disabled');
+                statusSpan.textContent = 'Unavailable';
+                btn.setAttribute('aria-disabled', 'true');
+              }
+
+              btn.appendChild(numSpan);
+              btn.appendChild(statusSpan);
+
+              // Click handler: only available slots are selectable
+              btn.addEventListener('click', () => {
+                if (state !== 'AVAILABLE') return;
+                selectedSlot = s;
+                sumSlot.textContent = `Bay ${s.slotNumber}`;
+                fetchSlotMap();
+                fetchQuote();
+              });
+
+              row.appendChild(btn);
+            });
+
+            return row;
+          }
+
+          slotMapCanvas.appendChild(renderSlotRow(topSlots));
+
+          if (bottomSlots.length > 0) {
+            const driveway = document.createElement('div');
+            driveway.className = 'driveway-divider';
+            driveway.textContent = '— DRIVEWAY / CIRCULATION AISLE —';
+            slotMapCanvas.appendChild(driveway);
+            slotMapCanvas.appendChild(renderSlotRow(bottomSlots));
+          }
+
+          // Arrow Key Navigation between slot buttons
+          setupArrowKeyNavigation();
+        } catch (err) {
+          console.error('Failed to load slots map:', err);
+          slotMapCanvas.innerHTML = '';
+          const empty = emptyState('Unable to Load Slot Map', err.message || 'Server error loading unit slots.', 'Retry', '#retry-map');
+          const rBtn = empty.querySelector('.empty-state-btn');
+          if (rBtn) {
+            rBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              fetchSlotMap();
+            });
+          }
+          slotMapCanvas.appendChild(empty);
+        }
+      }
+
+      // Keyboard Arrow Navigation
+      function setupArrowKeyNavigation() {
+        const buttons = Array.from(slotMapCanvas.querySelectorAll('.slot-btn'));
+        buttons.forEach((btn, index) => {
+          btn.addEventListener('keydown', (e) => {
+            let nextIndex = null;
+            if (e.key === 'ArrowRight') {
+              nextIndex = (index + 1) % buttons.length;
+            } else if (e.key === 'ArrowLeft') {
+              nextIndex = (index - 1 + buttons.length) % buttons.length;
+            } else if (e.key === 'ArrowDown') {
+              nextIndex = (index + 5) % buttons.length;
+            } else if (e.key === 'ArrowUp') {
+              nextIndex = (index - 5 + buttons.length) % buttons.length;
+            }
+
+            if (nextIndex !== null) {
+              e.preventDefault();
+              buttons[nextIndex].focus();
+            }
+          });
+        });
+      }
+
+      // 6. Fetch Server-Side Price Quote
+      async function fetchQuote() {
+        summaryErrorBox.style.display = 'none';
+        summaryErrorBox.textContent = '';
+
+        if (!selectedVehicle || !selectedSlot) {
+          btnProceed.disabled = true;
+          return;
+        }
+
+        const win = getScheduleWindow();
+        if (!win) {
+          btnProceed.disabled = true;
+          return;
+        }
+
+        try {
+          const payload = {
+            vehicleId: selectedVehicle._id,
+            slotId: selectedSlot._id,
+            startTime: win.startTimeIso,
+            durationType: win.durationType,
+            duration: win.duration
+          };
+
+          const res = await apiRequest('/bookings/quote', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          activeQuote = res;
+
+          sumBasePrice.textContent = `৳${res.price}`;
+          sumServiceCharge.textContent = `৳${res.serviceCharge}`;
+          sumTotalAmount.textContent = `৳${res.totalAmount}`;
+
+          if (res.available === false) {
+            btnProceed.disabled = true;
+            summaryErrorBox.textContent = res.reason || 'This slot is unavailable for the selected window.';
+            summaryErrorBox.style.display = 'block';
+          } else {
+            btnProceed.disabled = false;
+          }
+        } catch (err) {
+          console.error('Failed to get quote:', err);
+          btnProceed.disabled = true;
+          summaryErrorBox.textContent = err.message || 'Unable to generate pricing quote.';
+          summaryErrorBox.style.display = 'block';
+        }
+      }
+
+      // 7. Event Listeners for Schedule Changes
+      [dateInput, timeInput, durationSelect].forEach((input) => {
+        input.addEventListener('change', () => {
+          updateScheduleDisplay();
+          selectedSlot = null;
+          sumSlot.textContent = 'Not Selected';
+          fetchSlotMap();
+          fetchQuote();
+        });
+      });
+
+      btnRefreshMap.addEventListener('click', () => {
+        fetchSlotMap();
+        if (selectedSlot) fetchQuote();
+      });
+
+      // 8. Proceed to Payment Click Handler
+      btnProceed.addEventListener('click', async () => {
+        summaryErrorBox.style.display = 'none';
+        summaryErrorBox.textContent = '';
+
+        if (!selectedVehicle || !selectedSlot) return;
+
+        const win = getScheduleWindow();
+        if (!win) {
+          summaryErrorBox.textContent = 'Please configure a valid date and time.';
+          summaryErrorBox.style.display = 'block';
+          return;
+        }
+
+        btnProceed.disabled = true;
+        const origText = btnProceed.textContent;
+        btnProceed.textContent = 'Creating Reservation...';
+
+        try {
+          // 1. Create Booking
+          const bookingPayload = {
+            vehicleId: selectedVehicle._id,
+            slotId: selectedSlot._id,
+            startTime: win.startTimeIso,
+            durationType: win.durationType,
+            duration: win.duration
+          };
+
+          const bookingRes = await apiRequest('/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingPayload)
+          });
+
+          const booking = bookingRes.booking;
+
+          btnProceed.textContent = 'Initiating Payment Session...';
+
+          // 2. Initiate Payment Session
+          await apiRequest('/payments/initiate', {
+            method: 'POST',
+            body: JSON.stringify({ bookingId: booking._id })
+          });
+
+          // 3. Redirect to payment.html with bookingId
+          window.location.href = `payment.html?bookingId=${booking._id}`;
+        } catch (err) {
+          console.error('Reservation creation error:', err);
+          summaryErrorBox.textContent = err.message || 'Failed to reserve parking slot.';
+          summaryErrorBox.style.display = 'block';
+
+          btnProceed.disabled = false;
+          btnProceed.textContent = origText;
+
+          // If conflict (409), refresh map immediately
+          if (err.message && err.message.toLowerCase().includes('already reserved')) {
+            selectedSlot = null;
+            sumSlot.textContent = 'Not Selected';
+            fetchSlotMap();
+          }
+        }
+      });
+
+      // Initialize View
+      updateScheduleDisplay();
+      await loadContextData();
+      await loadVehicles();
+      await fetchSlotMap();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initBookingPage();
+      } catch (err) {
+        console.error('Booking page init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

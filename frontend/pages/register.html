@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Smart Parking</title>
+  <meta name="description" content="Register for a Smart Parking account to easily reserve, access, and pay for parking spots in Dhaka.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Header & Navigation -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="../index.html" class="brand-logo" aria-label="Smart Parking Home">Smart Parking</a>
+
+      <button 
+        type="button" 
+        class="nav-toggle" 
+        aria-controls="primary-nav" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <nav id="primary-nav" class="primary-nav" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="../index.html#parking-locations" class="nav-link">Parking Locations</a></li>
+          <li><a href="../index.html#how-it-works" class="nav-link">How It Works</a></li>
+          <li><a href="../index.html#features" class="nav-link">Features</a></li>
+          <li><a href="../index.html#pricing" class="nav-link">Pricing</a></li>
+          <li><a href="../index.html#about" class="nav-link">About</a></li>
+          <li><a href="../index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <a href="login.html" class="nav-login">Log In</a>
+          <a href="register.html" class="btn-signup is-active">Sign Up</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Auth Landmark -->
+  <main id="main-content" class="auth-main">
+    <div class="auth-container">
+      <section class="auth-panel" aria-labelledby="register-title">
+        <header class="auth-header">
+          <p class="auth-eyebrow">New Registration</p>
+          <h1 class="auth-title" id="register-title">Create Account</h1>
+          <p class="auth-subtitle">Register to reserve, navigate, and manage verified parking spots.</p>
+        </header>
+
+        <!-- Inline Error Banner -->
+        <div id="auth-error-alert" class="auth-alert" role="alert" aria-live="polite"></div>
+
+        <form id="register-form" class="auth-form" novalidate>
+          <div class="form-field">
+            <label for="reg-name" class="form-label">
+              Full Name <span class="form-required" aria-hidden="true">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="reg-name" 
+              name="name" 
+              class="form-input" 
+              placeholder="e.g. Tanvir Ahmed" 
+              autocomplete="name" 
+              required>
+          </div>
+
+          <div class="form-field">
+            <label for="reg-email" class="form-label">
+              Email Address <span class="form-required" aria-hidden="true">*</span>
+            </label>
+            <input 
+              type="email" 
+              id="reg-email" 
+              name="email" 
+              class="form-input" 
+              placeholder="name@example.com" 
+              autocomplete="email" 
+              required>
+          </div>
+
+          <div class="form-field">
+            <label for="reg-phone" class="form-label">
+              Phone Number <small class="form-hint">(Optional)</small>
+            </label>
+            <input 
+              type="tel" 
+              id="reg-phone" 
+              name="phone" 
+              class="form-input" 
+              placeholder="+880 1XXXXXXXXX" 
+              autocomplete="tel">
+          </div>
+
+          <div class="form-field">
+            <label for="reg-password" class="form-label">
+              Password <span class="form-required" aria-hidden="true">*</span>
+            </label>
+            <input 
+              type="password" 
+              id="reg-password" 
+              name="password" 
+              class="form-input" 
+              placeholder="Minimum 8 characters" 
+              autocomplete="new-password" 
+              minlength="8" 
+              required>
+            <span class="form-hint">Must be at least 8 characters long.</span>
+          </div>
+
+          <button type="submit" id="reg-submit-btn" class="btn-submit">
+            Create Account
+          </button>
+        </form>
+
+        <nav class="auth-switch" aria-label="Sign in navigation">
+          Already have an account? <a href="login.html">Sign in here</a>
+        </nav>
+      </section>
+    </div>
+  </main>
+
+  <footer class="auth-page-footer">
+    <div class="container">
+      <p>&copy; 2026 Smart Parking System. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script src="../js/navbar.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const siteRoot = (typeof window !== 'undefined' && window.SITE_ROOT) ? window.SITE_ROOT : '../';
+
+      function getValidRedirectTarget() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const next = urlParams.get('next');
+        const defaultTarget = siteRoot + 'pages/customer/dashboard.html';
+        if (!next) return defaultTarget;
+
+        if (
+          next.startsWith('//') ||
+          next.startsWith('http://') ||
+          next.startsWith('https://') ||
+          next.startsWith('javascript:') ||
+          next.startsWith('data:') ||
+          next.startsWith('\\')
+        ) {
+          return defaultTarget;
+        }
+
+        try {
+          const parsed = new URL(next, window.location.origin);
+          if (parsed.origin !== window.location.origin) {
+            return defaultTarget;
+          }
+          return parsed.pathname + parsed.search + parsed.hash;
+        } catch (e) {
+          return defaultTarget;
+        }
+      }
+
+      // Preserve next parameter on link to login
+      const urlParams = new URLSearchParams(window.location.search);
+      const nextParam = urlParams.get('next');
+      if (nextParam) {
+        const loginLink = document.querySelector('.auth-switch a');
+        if (loginLink) {
+          loginLink.href = `login.html?next=${encodeURIComponent(nextParam)}`;
+        }
+      }
+
+      // If already authenticated, redirect to next target or customer dashboard
+      if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+        window.location.href = getValidRedirectTarget();
+        return;
+      }
+
+      const form = document.getElementById('register-form');
+      const submitBtn = document.getElementById('reg-submit-btn');
+      const alertBox = document.getElementById('auth-error-alert');
+      const nameInput = document.getElementById('reg-name');
+      const emailInput = document.getElementById('reg-email');
+      const phoneInput = document.getElementById('reg-phone');
+      const passwordInput = document.getElementById('reg-password');
+
+      function showError(message) {
+        alertBox.textContent = message;
+        alertBox.classList.add('is-visible');
+      }
+
+      function clearError() {
+        alertBox.textContent = '';
+        alertBox.classList.remove('is-visible');
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError();
+
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!name || name.length < 2) {
+          showError('Please enter your full name (at least 2 characters).');
+          nameInput.focus();
+          return;
+        }
+
+        if (!email) {
+          showError('Please enter a valid email address.');
+          emailInput.focus();
+          return;
+        }
+
+        if (!password || password.length < 8) {
+          showError('Password must be at least 8 characters long.');
+          passwordInput.focus();
+          return;
+        }
+
+        // Set pending UI state
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Please wait...';
+
+        try {
+          await register({ name, email, phone, password });
+          // Redirect on success to next destination or customer dashboard
+          window.location.href = getValidRedirectTarget();
+        } catch (err) {
+          showError(err.message || 'Registration failed. Please check your details.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

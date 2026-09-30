@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facility Parking Details — Smart Parking</title>
+  <meta name="description" content="View parking floors, zones, and unit bay availability for your scheduled parking duration.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/parking.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content" class="parking-main">
+    <div class="container">
+      <!-- Accessible Breadcrumb Navigation -->
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb navigation">
+        <ol class="breadcrumb-list" id="breadcrumb-container">
+          <li class="breadcrumb-item">
+            <a href="parking.html" id="breadcrumb-parking-link">Parking</a>
+          </li>
+          <li class="breadcrumb-separator" aria-hidden="true">/</li>
+          <li class="breadcrumb-item">
+            <span id="breadcrumb-location" class="breadcrumb-current">Location</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Location Details Panel (Header) -->
+      <section id="location-header-panel" class="location-detail-panel" aria-labelledby="facility-title">
+        <div id="location-header-content">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Schedule Banner Info -->
+      <div id="schedule-info-banner" class="results-header-row" style="margin-bottom: var(--space-4);">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Floors Section -->
+      <section class="selection-section" aria-labelledby="floors-section-title">
+        <h2 id="floors-section-title" class="selection-title">
+          <span>Parking Floors</span>
+          <small id="floors-count-badge" class="results-filter-badge"></small>
+        </h2>
+        <div id="floors-grid" class="floors-grid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Units Section (Shown when a floor is selected) -->
+      <section id="units-section" class="selection-section" aria-labelledby="units-section-title" style="display: none;">
+        <h2 id="units-section-title" class="selection-title">
+          <span id="units-section-heading">Parking Units</span>
+          <small id="units-count-badge" class="results-filter-badge"></small>
+        </h2>
+        <div id="units-grid" class="units-grid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initParkingDetails() {
+      // 1. Initialize Site Chrome
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const locationId = params.get('id');
+      const dateVal = params.get('date') || new Date().toISOString().split('T')[0];
+      const timeVal = params.get('time') || '10:00';
+      const durationVal = params.get('duration') || '2H';
+      const vehicleVal = params.get('vehicleType') || 'CAR';
+
+      // Elements
+      const headerContent = document.getElementById('location-header-content');
+      const scheduleBanner = document.getElementById('schedule-info-banner');
+      const floorsGrid = document.getElementById('floors-grid');
+      const floorsCountBadge = document.getElementById('floors-count-badge');
+      const unitsSection = document.getElementById('units-section');
+      const unitsGrid = document.getElementById('units-grid');
+      const unitsHeading = document.getElementById('units-section-heading');
+      const unitsCountBadge = document.getElementById('units-count-badge');
+      const breadcrumbContainer = document.getElementById('breadcrumb-container');
+      const breadcrumbParkingLink = document.getElementById('breadcrumb-parking-link');
+
+      // Update parking breadcrumb link with preserved search params
+      const parkingParams = new URLSearchParams();
+      if (dateVal) parkingParams.set('date', dateVal);
+      if (timeVal) parkingParams.set('time', timeVal);
+      if (durationVal) parkingParams.set('duration', durationVal);
+      if (vehicleVal) parkingParams.set('vehicleType', vehicleVal);
+      breadcrumbParkingLink.href = `parking.html?${parkingParams.toString()}`;
+
+      if (!locationId) {
+        headerContent.innerHTML = '';
+        const empty = emptyState(
+          'Location Not Specified',
+          'Please return to the parking directory and select a valid facility to view details.',
+          'Browse Parking Facilities',
+          `parking.html?${parkingParams.toString()}`
+        );
+        headerContent.appendChild(empty);
+        floorsGrid.innerHTML = '';
+        return;
+      }
+
+      // Calculate Window ISOs
+      function calculateWindow(dateStr, timeStr, durationStr) {
+        if (!dateStr || !timeStr) return null;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hours, minutes] = timeStr.split(':').map(Number);
+
+        const startDate = new Date(year, month - 1, day, hours, minutes || 0);
+        if (isNaN(startDate.getTime())) return null;
+
+        let durationMs = 2 * 60 * 60 * 1000;
+        if (durationStr.endsWith('H')) {
+          const h = parseInt(durationStr, 10) || 1;
+          durationMs = h * 60 * 60 * 1000;
+        } else if (durationStr.endsWith('D')) {
+          const d = parseInt(durationStr, 10) || 1;
+          durationMs = d * 24 * 60 * 60 * 1000;
+        }
+
+        const endDate = new Date(startDate.getTime() + durationMs);
+        return {
+          startDate,
+          endDate,
+          startTimeIso: startDate.toISOString(),
+          endTimeIso: endDate.toISOString()
+        };
+      }
+
+      const win = calculateWindow(dateVal, timeVal, durationVal);
+
+      // Render Schedule Banner
+      scheduleBanner.innerHTML = '';
+      const scheduleText = document.createElement('div');
+      scheduleText.className = 'results-filter-badge';
+      scheduleText.textContent = `Schedule Window: ${dateVal} at ${timeVal} • Duration: ${durationVal} • Vehicle: ${vehicleVal}`;
+      scheduleBanner.appendChild(scheduleText);
+
+      let currentLocation = null;
+      let selectedFloor = null;
+
+      // Update Breadcrumbs
+      function updateBreadcrumb(floor = null, unit = null) {
+        breadcrumbContainer.innerHTML = '';
+
+        // 1. Parking link
+        const liParking = document.createElement('li');
+        liParking.className = 'breadcrumb-item';
+        const aParking = document.createElement('a');
+        aParking.href = `parking.html?${parkingParams.toString()}`;
+        aParking.textContent = 'Parking';
+        liParking.appendChild(aParking);
+        breadcrumbContainer.appendChild(liParking);
+
+        const sep1 = document.createElement('li');
+        sep1.className = 'breadcrumb-separator';
+        sep1.setAttribute('aria-hidden', 'true');
+        sep1.textContent = '/';
+        breadcrumbContainer.appendChild(sep1);
+
+        // 2. Location
+        const locName = currentLocation ? currentLocation.name : 'Location';
+        const liLoc = document.createElement('li');
+        liLoc.className = 'breadcrumb-item';
+
+        if (floor) {
+          const aLoc = document.createElement('a');
+          aLoc.href = `#location`;
+          aLoc.textContent = locName;
+          aLoc.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectedFloor = null;
+            updateBreadcrumb();
+            unitsSection.style.display = 'none';
+            document.querySelectorAll('.floor-card').forEach((c) => c.classList.remove('is-selected'));
+          });
+          liLoc.appendChild(aLoc);
+        } else {
+          const spanLoc = document.createElement('span');
+          spanLoc.className = 'breadcrumb-current';
+          spanLoc.setAttribute('aria-current', 'page');
+          spanLoc.textContent = locName;
+          liLoc.appendChild(spanLoc);
+        }
+        breadcrumbContainer.appendChild(liLoc);
+
+        // 3. Floor (if selected)
+        if (floor) {
+          const sep2 = document.createElement('li');
+          sep2.className = 'breadcrumb-separator';
+          sep2.setAttribute('aria-hidden', 'true');
+          sep2.textContent = '/';
+          breadcrumbContainer.appendChild(sep2);
+
+          const liFloor = document.createElement('li');
+          liFloor.className = 'breadcrumb-item';
+
+          if (unit) {
+            const aFloor = document.createElement('a');
+            aFloor.href = `#floor-${floor._id}`;
+            aFloor.textContent = floor.name;
+            liFloor.appendChild(aFloor);
+          } else {
+            const spanFloor = document.createElement('span');
+            spanFloor.className = 'breadcrumb-current';
+            spanFloor.setAttribute('aria-current', 'page');
+            spanFloor.textContent = floor.name;
+            liFloor.appendChild(spanFloor);
+          }
+          breadcrumbContainer.appendChild(liFloor);
+        }
+      }
+
+      // Load Location Header Details
+      async function loadLocationHeader() {
+        headerContent.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          headerContent.appendChild(loadingSkeleton(2, 'card'));
+        }
+
+        try {
+          const res = await apiRequest(`/public/locations/${locationId}`);
+          currentLocation = res.location;
+          headerContent.innerHTML = '';
+
+          const headerDiv = document.createElement('div');
+          headerDiv.className = 'location-detail-header';
+
+          const nameEl = document.createElement('h1');
+          nameEl.id = 'facility-title';
+          nameEl.className = 'location-detail-name';
+          nameEl.textContent = currentLocation.name;
+
+          const addrEl = document.createElement('p');
+          addrEl.className = 'location-detail-address';
+          const addr = currentLocation.address || {};
+          addrEl.textContent = `${addr.addressLine || ''}, ${addr.area || ''}, ${addr.city || 'Dhaka'}`;
+
+          headerDiv.appendChild(nameEl);
+          headerDiv.appendChild(addrEl);
+
+          // Facilities List
+          if (currentLocation.facilities && currentLocation.facilities.length > 0) {
+            const facList = document.createElement('div');
+            facList.className = 'location-detail-facilities';
+            currentLocation.facilities.forEach((fac) => {
+              const pill = document.createElement('span');
+              pill.className = 'facility-pill';
+              pill.textContent = fac;
+              facList.appendChild(pill);
+            });
+            headerDiv.appendChild(facList);
+          }
+
+          headerContent.appendChild(headerDiv);
+
+          // Description
+          if (currentLocation.description) {
+            const descEl = document.createElement('p');
+            descEl.className = 'parking-desc';
+            descEl.textContent = currentLocation.description;
+            headerContent.appendChild(descEl);
+          }
+
+          document.title = `${currentLocation.name} — Smart Parking`;
+          updateBreadcrumb();
+        } catch (err) {
+          console.error('Failed to load location details:', err);
+          headerContent.innerHTML = '';
+
+          const errWrap = document.createElement('div');
+          errWrap.className = 'empty-state';
+
+          const errTitle = document.createElement('h2');
+          errTitle.className = 'empty-state-title';
+          errTitle.textContent = 'Unable to Load Facility';
+
+          const errMsg = document.createElement('p');
+          errMsg.className = 'empty-state-text';
+          errMsg.textContent = err.message || 'The specified parking facility could not be retrieved.';
+
+          const retryBtn = document.createElement('button');
+          retryBtn.type = 'button';
+          retryBtn.className = 'btn-primary';
+          retryBtn.textContent = 'Retry';
+          retryBtn.addEventListener('click', loadLocationHeader);
+
+          errWrap.appendChild(errTitle);
+          errWrap.appendChild(errMsg);
+          errWrap.appendChild(retryBtn);
+          headerContent.appendChild(errWrap);
+        }
+      }
+
+      // Load Floors with window
+      async function loadFloors() {
+        floorsGrid.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          floorsGrid.appendChild(loadingSkeleton(3, 'card'));
+        }
+
+        try {
+          const floorParams = new URLSearchParams();
+          if (win) {
+            floorParams.set('startTime', win.startTimeIso);
+            floorParams.set('endTime', win.endTimeIso);
+          }
+          if (vehicleVal) floorParams.set('vehicleType', vehicleVal);
+
+          const res = await apiRequest(`/public/locations/${locationId}/floors?${floorParams.toString()}`);
+          const floors = res.floors || [];
+
+          floorsGrid.innerHTML = '';
+          floorsCountBadge.textContent = `${floors.length} Floor${floors.length === 1 ? '' : 's'}`;
+
+          if (floors.length === 0) {
+            const empty = emptyState(
+              'No Floors Configured',
+              'This facility does not currently have active floors configured.',
+              'Choose Another Location',
+              `parking.html?${parkingParams.toString()}`
+            );
+            floorsGrid.appendChild(empty);
+            return;
+          }
+
+          floors.forEach((floor, idx) => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'floor-card';
+            card.id = `floor-card-${floor._id}`;
+            card.setAttribute('aria-pressed', 'false');
+
+            const name = document.createElement('div');
+            name.className = 'floor-card-name';
+            name.textContent = floor.name;
+
+            const stats = document.createElement('div');
+            stats.className = 'floor-card-stats';
+
+            const availSpan = document.createElement('span');
+            availSpan.innerHTML = `Available: <strong>${floor.available}</strong>`;
+
+            const occSpan = document.createElement('span');
+            occSpan.innerHTML = ` • Occupied: <strong>${floor.occupied}</strong>`;
+
+            const totalSpan = document.createElement('span');
+            totalSpan.innerHTML = ` • Total: <strong>${floor.total}</strong>`;
+
+            stats.appendChild(availSpan);
+            stats.appendChild(occSpan);
+            stats.appendChild(totalSpan);
+
+            card.appendChild(name);
+            card.appendChild(stats);
+
+            card.addEventListener('click', () => {
+              selectFloor(floor, card);
+            });
+
+            floorsGrid.appendChild(card);
+
+            // Auto-select first floor by default for ease of navigation
+            if (idx === 0 && !selectedFloor) {
+              selectFloor(floor, card);
+            }
+          });
+        } catch (err) {
+          console.error('Failed to load floors:', err);
+          floorsGrid.innerHTML = '';
+
+          const errWrap = document.createElement('div');
+          errWrap.className = 'empty-state';
+
+          const errTitle = document.createElement('h3');
+          errTitle.className = 'empty-state-title';
+          errTitle.textContent = 'Unable to Load Floors';
+
+          const errMsg = document.createElement('p');
+          errMsg.className = 'empty-state-text';
+          errMsg.textContent = err.message || 'Server error loading floor availability.';
+
+          const retryBtn = document.createElement('button');
+          retryBtn.type = 'button';
+          retryBtn.className = 'btn-primary';
+          retryBtn.textContent = 'Retry';
+          retryBtn.addEventListener('click', loadFloors);
+
+          errWrap.appendChild(errTitle);
+          errWrap.appendChild(errMsg);
+          errWrap.appendChild(retryBtn);
+          floorsGrid.appendChild(errWrap);
+        }
+      }
+
+      // Select Floor and Fetch Units
+      async function selectFloor(floor, cardElement) {
+        selectedFloor = floor;
+        document.querySelectorAll('.floor-card').forEach((c) => {
+          c.classList.remove('is-selected');
+          c.setAttribute('aria-pressed', 'false');
+        });
+
+        if (cardElement) {
+          cardElement.classList.add('is-selected');
+          cardElement.setAttribute('aria-pressed', 'true');
+        }
+
+        updateBreadcrumb(floor);
+        unitsSection.style.display = 'block';
+        unitsHeading.textContent = `Parking Units — ${floor.name}`;
+
+        unitsGrid.innerHTML = '';
+        if (typeof loadingSkeleton === 'function') {
+          unitsGrid.appendChild(loadingSkeleton(3, 'card'));
+        }
+
+        try {
+          const unitParams = new URLSearchParams();
+          if (win) {
+            unitParams.set('startTime', win.startTimeIso);
+            unitParams.set('endTime', win.endTimeIso);
+          }
+          if (vehicleVal) unitParams.set('vehicleType', vehicleVal);
+
+          const res = await apiRequest(`/public/floors/${floor._id}/units?${unitParams.toString()}`);
+          const units = res.units || [];
+
+          unitsGrid.innerHTML = '';
+          unitsCountBadge.textContent = `${units.length} Unit${units.length === 1 ? '' : 's'}`;
+
+          if (units.length === 0) {
+            const empty = emptyState(
+              'No Units Found',
+              'No active units or zones are configured on this floor.',
+              'Choose Another Floor',
+              '#floors-section-title'
+            );
+            unitsGrid.appendChild(empty);
+            return;
+          }
+
+          units.forEach((unit) => {
+            const card = document.createElement('article');
+            card.className = 'unit-card';
+
+            const header = document.createElement('div');
+            header.className = 'unit-card-header';
+
+            const code = document.createElement('h3');
+            code.className = 'unit-card-code';
+            code.textContent = unit.code;
+
+            const name = document.createElement('span');
+            name.className = 'unit-card-name';
+            name.textContent = unit.name;
+
+            header.appendChild(code);
+            header.appendChild(name);
+            card.appendChild(header);
+
+            // Available / Occupied / Total as text
+            const stats = document.createElement('div');
+            stats.className = 'unit-card-stats';
+
+            const pStats = document.createElement('p');
+            pStats.innerHTML = `Available: <strong>${unit.available}</strong> • Occupied: <strong>${unit.occupied}</strong> • Total: <strong>${unit.total}</strong>`;
+            stats.appendChild(pStats);
+            card.appendChild(stats);
+
+            // Link to booking.html with unitId, locationId, floorId and preserved schedule parameters
+            const bookingParams = new URLSearchParams();
+            bookingParams.set('unitId', unit._id);
+            bookingParams.set('locationId', locationId);
+            bookingParams.set('floorId', floor._id);
+            if (dateVal) bookingParams.set('date', dateVal);
+            if (timeVal) bookingParams.set('time', timeVal);
+            if (durationVal) bookingParams.set('duration', durationVal);
+            if (vehicleVal) bookingParams.set('vehicleType', vehicleVal);
+
+            const actionLink = document.createElement('a');
+            actionLink.className = `unit-card-action ${unit.available === 0 ? 'is-disabled' : ''}`;
+            actionLink.href = `booking.html?${bookingParams.toString()}`;
+            actionLink.textContent = unit.available > 0 ? 'Select Unit' : 'Unit Full';
+
+            if (unit.available === 0) {
+              actionLink.setAttribute('aria-disabled', 'true');
+              actionLink.removeAttribute('href');
+            }
+
+            card.appendChild(actionLink);
+            unitsGrid.appendChild(card);
+          });
+        } catch (err) {
+          console.error('Failed to load units for floor:', err);
+          unitsGrid.innerHTML = '';
+
+          const errWrap = document.createElement('div');
+          errWrap.className = 'empty-state';
+
+          const errTitle = document.createElement('h3');
+          errTitle.className = 'empty-state-title';
+          errTitle.textContent = 'Unable to Load Units';
+
+          const errMsg = document.createElement('p');
+          errMsg.className = 'empty-state-text';
+          errMsg.textContent = err.message || 'Server error loading unit details for this floor.';
+
+          const retryBtn = document.createElement('button');
+          retryBtn.type = 'button';
+          retryBtn.className = 'btn-primary';
+          retryBtn.textContent = 'Retry';
+          retryBtn.addEventListener('click', () => selectFloor(floor, cardElement));
+
+          errWrap.appendChild(errTitle);
+          errWrap.appendChild(errMsg);
+          errWrap.appendChild(retryBtn);
+          unitsGrid.appendChild(errWrap);
+        }
+      }
+
+      // Initial Fetch
+      await loadLocationHeader();
+      await loadFloors();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initParkingDetails();
+      } catch (err) {
+        console.error('Parking details init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

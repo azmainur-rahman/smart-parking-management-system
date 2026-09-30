@@ -2,6 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import { register, login, getMe, logout } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
+import { authLimiter } from '../middleware/rateLimiters.js';
 
 const router = express.Router();
 
@@ -38,8 +39,8 @@ const loginValidation = [
 ];
 
 // Routes
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
+router.post('/register', authLimiter, registerValidation, register);
+router.post('/login', authLimiter, loginValidation, login);
 router.get('/me', requireAuth, getMe);
 router.post('/logout', requireAuth, logout);
 

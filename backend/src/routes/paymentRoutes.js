@@ -4,11 +4,19 @@ import {
   initiatePayment,
   paymentSuccess,
   paymentFailed,
-  getPaymentByBooking
+  getPaymentByBooking,
+  getMyPayments
 } from '../controllers/paymentController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+/**
+ * @route   GET /api/payments
+ * @desc    Get user payment history sorted newest first
+ * @access  Private
+ */
+router.get('/', requireAuth, getMyPayments);
 
 /**
  * @route   POST /api/payments/initiate

@@ -29,6 +29,7 @@
   <!-- Core Stylesheets -->
   <link rel="stylesheet" href="css/global.css">
   <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/landing.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
@@ -52,7 +53,7 @@
       <nav id="primary-nav" class="primary-nav" aria-label="Main Navigation">
         <ul class="nav-links">
           <li><a href="#" class="nav-link is-active" aria-current="page">Home</a></li>
-          <li><a href="#parking-locations" class="nav-link">Parking Locations</a></li>
+          <li><a href="pages/parking.html" class="nav-link">Parking Locations</a></li>
           <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
           <li><a href="#features" class="nav-link">Features</a></li>
           <li><a href="#pricing" class="nav-link">Pricing</a></li>
@@ -61,8 +62,8 @@
         </ul>
 
         <div class="nav-actions">
-          <a href="#login" class="nav-login">Log In</a>
-          <a href="#signup" class="btn-signup">Sign Up</a>
+          <a href="pages/login.html" class="nav-login">Log In</a>
+          <a href="pages/register.html" class="btn-signup">Sign Up</a>
         </div>
       </nav>
     </div>
@@ -242,7 +243,7 @@
           <p class="section-description">Select from verified multi-tier parking facilities across the capital.</p>
         </header>
 
-        <div class="locations-grid">
+        <div class="locations-grid" id="landing-locations-grid">
           <!-- Location 1 -->
           <article class="location-card">
             <div class="location-media-placeholder" aria-label="Facility preview placeholder">
@@ -506,7 +507,7 @@
         <div class="footer-col">
           <h4 class="footer-heading">Product</h4>
           <ul class="footer-links">
-            <li><a href="#parking-locations">Parking Locations</a></li>
+            <li><a href="pages/parking.html">Parking Locations</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="#how-it-works">How It Works</a></li>
           </ul>
@@ -528,6 +529,9 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/navbar.js"></script>
   <script src="js/hero.js"></script>
   <script src="js/contact.js"></script>

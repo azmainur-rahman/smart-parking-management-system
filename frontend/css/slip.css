@@ -1,0 +1,263 @@
+/**
+ * Smart Parking Management System — Booking Slip Stylesheet
+ * Strict Editorial Aesthetic: Tokens-only, zero drop-shadows, zero gradients, zero emojis.
+ * Mobile-first responsive architecture down to 320px with print fidelity.
+ */
+
+:root {
+  --slip-max-width: 460px;
+}
+
+/* Page Container */
+.slip-page-main {
+  padding-block: var(--space-6) var(--space-8);
+  min-height: calc(100vh - 160px);
+}
+
+.slip-layout-wrapper {
+  max-width: var(--slip-max-width);
+  margin-inline: auto;
+}
+
+/* Receipt Card Container */
+.receipt-container {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-ink);
+  padding: var(--space-6) var(--space-5);
+  position: relative;
+}
+
+/* Receipt Header */
+.receipt-header {
+  text-align: center;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px dashed var(--color-ink);
+  margin-bottom: var(--space-4);
+}
+
+.receipt-brand-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  margin-bottom: var(--space-1);
+}
+
+.receipt-sub-title {
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Receipt Details List */
+.receipt-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.receipt-label {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.receipt-value {
+  font-weight: 500;
+  color: var(--color-ink);
+  text-align: right;
+  word-break: break-word;
+}
+
+.receipt-value.font-mono {
+  font-family: monospace;
+  letter-spacing: 0.03em;
+}
+
+.receipt-value.highlight {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--color-accent);
+}
+
+/* Price & Payment Confirmation Row */
+.receipt-total-row {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  margin-top: var(--space-2);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.receipt-total-amount {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--color-ink);
+}
+
+.receipt-status-pill {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border: 1px solid #2D6A4F;
+  color: #2D6A4F;
+  background-color: #F2F8F5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* QR Code Section */
+.receipt-qr-section {
+  text-align: center;
+  border-top: 1px dashed var(--color-ink);
+  padding-top: var(--space-5);
+  margin-top: var(--space-4);
+}
+
+.receipt-qr-wrap {
+  display: inline-block;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  background-color: #FFFFFF;
+  margin-bottom: var(--space-2);
+}
+
+.receipt-qr-img {
+  display: block;
+  width: 140px;
+  height: 140px;
+  margin-inline: auto;
+}
+
+.receipt-qr-caption {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Action Button Row */
+.slip-actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+@media (min-width: 480px) {
+  .slip-actions-bar {
+    flex-direction: row;
+  }
+  .slip-actions-bar .btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+.btn-slip-action {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-slip-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn-download-pdf {
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  border: 1px solid var(--color-ink);
+}
+
+.btn-download-pdf:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-print-slip {
+  background-color: #FFFFFF;
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+
+.btn-print-slip:hover {
+  border-color: var(--color-ink);
+}
+
+.btn-share-slip {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+
+.btn-share-slip:hover {
+  border-color: var(--color-ink);
+}
+
+/* Print Stylesheet Overrides */
+@media print {
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #site-header,
+  #site-footer,
+  .slip-actions-bar,
+  .breadcrumb-nav,
+  .app-sidebar,
+  .mobile-tab-bar,
+  .btn {
+    display: none !important;
+  }
+
+  .slip-page-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+  }
+
+  .slip-layout-wrapper {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .receipt-container {
+    border: 1px solid #000000 !important;
+    padding: 20px !important;
+    margin-inline: auto !important;
+    max-width: 400px !important;
+    page-break-inside: avoid;
+  }
+
+  .receipt-status-pill {
+    border-color: #000000 !important;
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+}

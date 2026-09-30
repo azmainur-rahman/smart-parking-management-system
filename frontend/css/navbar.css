@@ -110,6 +110,52 @@
   color: var(--color-paper);
 }
 
+.nav-user-greeting {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.nav-user-greeting:hover {
+  color: var(--color-accent);
+}
+
+.nav-user-greeting:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-logout:hover {
+  border-color: var(--color-ink);
+  background-color: var(--color-border);
+}
+
+.btn-logout:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Hamburger Toggle Button */
 .nav-toggle {
   display: none;
@@ -188,6 +234,17 @@
   .btn-signup {
     text-align: center;
     padding-block: var(--space-3);
+  }
+
+  .nav-user-greeting {
+    text-align: center;
+    padding-block: var(--space-2);
+  }
+
+  .btn-logout {
+    text-align: center;
+    padding-block: var(--space-3);
+    width: 100%;
   }
 
   /* Animated state for hamburger bars when open */

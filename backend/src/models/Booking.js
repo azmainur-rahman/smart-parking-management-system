@@ -101,9 +101,36 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    entryManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
     exitTime: {
       type: Date,
       default: null
+    },
+    exitManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    holdExpiresAt: {
+      type: Date,
+      default: null,
+      index: true
+    },
+    cancelledAt: {
+      type: Date,
+      default: null
+    },
+    cancelReason: {
+      type: String,
+      default: ''
+    },
+    refundAmount: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -118,7 +145,7 @@ bookingSchema.index({ slotId: 1, startTime: 1, endTime: 1 });
  * Static method: Detect overlapping bookings for a given slot.
  * A conflict occurs when:
  *   existing.startTime < requested.endTime AND existing.endTime > requested.startTime
- * Excludes cancelled, expired, or failed bookings.
+ * Excludes cancelled, expired, or failed bookings, and ignores PENDING_PAYMENT bookings whose hold has expired.
  */
 bookingSchema.statics.findOverlappingBookings = function (
   slotId,
@@ -126,13 +153,20 @@ bookingSchema.statics.findOverlappingBookings = function (
   endTime,
   excludeBookingId = null
 ) {
+  const now = new Date();
   const query = {
     slotId,
     startTime: { $lt: new Date(endTime) },
     endTime: { $gt: new Date(startTime) },
     bookingStatus: {
       $nin: ['CANCELLED', 'EXPIRED', 'FAILED']
-    }
+    },
+    $nor: [
+      {
+        bookingStatus: 'PENDING_PAYMENT',
+        holdExpiresAt: { $lt: now }
+      }
+    ]
   };
 
   if (excludeBookingId) {
@@ -142,31 +176,14 @@ bookingSchema.statics.findOverlappingBookings = function (
   return this.find(query);
 };
 
-bookingSchema.methods.generateQRPayload = function (slotNumberOverride) {
-  const slotNum =
-    slotNumberOverride ||
-    (this.slotId && this.slotId.slotNumber ? this.slotId.slotNumber : 'SLOT');
-
-  return generateQRCode({
-    bookingNumber: this.bookingNumber,
-    slotNumber: slotNum,
-    startTime: this.startTime,
-    endTime: this.endTime
-  });
+bookingSchema.methods.generateQRPayload = function () {
+  // Spec Section 24: QR payload = bookingNumber ONLY
+  return this.bookingNumber;
 };
 
 bookingSchema.virtual('qrPayload').get(function () {
-  const slotNum =
-    this.slotId && typeof this.slotId === 'object' && this.slotId.slotNumber
-      ? this.slotId.slotNumber
-      : 'SLOT';
-
-  return generateQRCode({
-    bookingNumber: this.bookingNumber,
-    slotNumber: slotNum,
-    startTime: this.startTime,
-    endTime: this.endTime
-  });
+  // Spec Section 24: QR payload = bookingNumber ONLY
+  return this.bookingNumber;
 });
 
 bookingSchema.methods.toJSON = function () {

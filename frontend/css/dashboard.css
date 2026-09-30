@@ -1,0 +1,701 @@
+/* ==========================================================================
+   Customer Dashboard & App Shell Styles
+   Strictly following AGENTS.md: tokens only, 0 shadows, 0 gradients, no emoji.
+   ========================================================================== */
+
+/* App Shell Wrapper Layout */
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - 72px);
+  background-color: var(--color-paper);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar Navigation (Desktop >= 1024px)
+   -------------------------------------------------------------------------- */
+.app-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-brand-summary {
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar-portal-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.sidebar-user-name {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-top: 2px;
+}
+
+.sidebar-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sidebar-nav-item {
+  width: 100%;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-muted);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: var(--radius);
+  transition: color 0.15s ease, background-color 0.15s ease;
+  min-height: 44px;
+}
+
+.sidebar-nav-link:hover:not([aria-disabled="true"]) {
+  color: var(--color-ink);
+  background-color: #F1EEE6;
+}
+
+.sidebar-nav-link.is-active {
+  color: var(--color-ink);
+  font-weight: 600;
+  border-left: 2px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background-color: #EFECE3;
+}
+
+.sidebar-nav-link[aria-disabled="true"] {
+  color: #B5B2AA;
+  cursor: not-allowed;
+}
+
+.nav-soon-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.sidebar-footer {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  min-height: 44px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sidebar-logout-btn:hover {
+  border-color: var(--color-ink);
+  background-color: #EDEAE1;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile Horizontal Tab Bar (< 1024px)
+   -------------------------------------------------------------------------- */
+.mobile-tab-bar {
+  display: none;
+  background-color: var(--color-paper);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-2) var(--space-4);
+  gap: var(--space-2);
+}
+
+.mobile-tab-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  min-height: 44px;
+}
+
+.mobile-tab-link.is-active {
+  color: var(--color-ink);
+  font-weight: 600;
+  border-bottom-color: var(--color-accent);
+}
+
+.mobile-tab-link[aria-disabled="true"] {
+  color: #B5B2AA;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Main App Content Area
+   -------------------------------------------------------------------------- */
+.app-main {
+  flex-grow: 1;
+  padding: var(--space-7) var(--space-8);
+  max-width: 1100px;
+  width: 100%;
+}
+
+.app-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.app-page-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-1);
+}
+
+.app-page-title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+  line-height: 1.15;
+}
+
+.app-page-desc {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  margin-top: var(--space-1);
+}
+
+/* --------------------------------------------------------------------------
+   Stat Blocks Grid
+   -------------------------------------------------------------------------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-7);
+}
+
+.stat-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  background-color: var(--color-paper);
+}
+
+.stat-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  margin-top: var(--space-2);
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Section Cards & Lists
+   -------------------------------------------------------------------------- */
+.content-section {
+  margin-bottom: var(--space-7);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: var(--space-4);
+}
+
+/* Booking Row Item */
+.booking-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-3);
+  background-color: var(--color-paper);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.booking-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.booking-number {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.booking-location {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.booking-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.booking-time {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Vehicle Cards Grid
+   -------------------------------------------------------------------------- */
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.vehicle-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  background-color: var(--color-paper);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vehicle-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.vehicle-brand-model {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.vehicle-reg-pill {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  background-color: #F3EFE7;
+  border-radius: var(--radius);
+  margin-top: var(--space-1);
+}
+
+.vehicle-meta-list {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.vehicle-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+/* --------------------------------------------------------------------------
+   Role Warning Notice
+   -------------------------------------------------------------------------- */
+.role-notice-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+  max-width: 520px;
+  margin: var(--space-8) auto;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  .app-sidebar {
+    display: none;
+  }
+
+  .mobile-tab-bar {
+    display: flex;
+  }
+
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .app-main {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-page-title {
+    font-size: 1.75rem;
+  }
+
+  .vehicle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Filter Tabs & Search Toolbar
+   -------------------------------------------------------------------------- */
+.filter-tabs-bar {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-5);
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  min-height: 44px;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-tab-btn:hover {
+  color: var(--color-ink);
+}
+
+.filter-tab-btn.is-active {
+  color: var(--color-ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.filter-tab-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.filter-tab-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  background-color: #FFFFFF;
+}
+
+.table-toolbar-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .table-toolbar-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.search-box-wrap {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 360px;
+}
+
+.search-box-input {
+  flex: 1;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border);
+  background-color: #FFFFFF;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+.search-box-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Desktop Data Table & Mobile Stacked Cards
+   -------------------------------------------------------------------------- */
+.data-table-container {
+  display: none;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  .data-table-container {
+    display: block;
+  }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-ink);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background-color: #FAF8F4;
+}
+
+/* Mobile Stacked Cards (< 768px) */
+.stacked-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .stacked-cards-list {
+    display: none;
+  }
+}
+
+.stacked-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stacked-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.stacked-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.875rem;
+}
+
+.stacked-card-label {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.stacked-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+/* Row Action Buttons (min 44px touch) */
+.btn-row-action {
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.btn-row-action:hover {
+  border-color: var(--color-ink);
+}
+
+.btn-row-action.primary {
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  border-color: var(--color-ink);
+}
+
+.btn-row-action.primary:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-row-action.danger {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-row-action.danger:hover {
+  background-color: #FAF0EC;
+}
+
+/* Pagination Footer Bar */
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pagination-info {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.btn-page-nav {
+  min-height: 44px;
+  min-width: 44px;
+  padding-inline: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background-color: #FFFFFF;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.btn-page-nav:hover:not(:disabled) {
+  border-color: var(--color-ink);
+}
+
+.btn-page-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+

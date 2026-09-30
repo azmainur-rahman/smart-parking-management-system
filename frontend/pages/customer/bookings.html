@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings — Smart Parking</title>
+  <meta name="description" content="View, manage, and inspect all your reserved parking bays, active sessions, and receipts.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/shell.js"></script>
+
+  <script>
+    async function initBookingsPage() {
+      try {
+        const appContent = renderShell('bookings');
+        if (!appContent) return;
+
+        // 1. Page Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Customer Reservations';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'My Bookings';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Inspect your reservations, download electronic booking receipts, or cancel upcoming bays.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // State Variables
+        let currentTab = 'ALL';
+        let searchQuery = '';
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // 2. Filter Tabs Container
+        const tabsBar = document.createElement('nav');
+        tabsBar.className = 'filter-tabs-bar';
+        tabsBar.setAttribute('aria-label', 'Filter bookings by status');
+
+        const TABS_CONFIG = [
+          { key: 'ALL', label: 'All' },
+          { key: 'UPCOMING', label: 'Upcoming' },
+          { key: 'ACTIVE', label: 'Active' },
+          { key: 'COMPLETED', label: 'Completed' },
+          { key: 'CANCELLED', label: 'Cancelled' }
+        ];
+
+        const tabButtons = {};
+
+        TABS_CONFIG.forEach((tab) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `filter-tab-btn ${tab.key === currentTab ? 'is-active' : ''}`;
+          btn.textContent = tab.label;
+
+          const countSpan = document.createElement('span');
+          countSpan.className = 'filter-tab-count';
+          countSpan.textContent = '0';
+          btn.appendChild(countSpan);
+
+          btn.addEventListener('click', () => {
+            if (currentTab === tab.key) return;
+            currentTab = tab.key;
+            currentPage = 1;
+            Object.values(tabButtons).forEach((b) => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            loadBookings();
+          });
+
+          tabButtons[tab.key] = btn;
+          tabsBar.appendChild(btn);
+        });
+
+        appContent.appendChild(tabsBar);
+
+        // 3. Search Toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'table-toolbar-row';
+
+        const searchWrap = document.createElement('form');
+        searchWrap.className = 'search-box-wrap';
+        searchWrap.setAttribute('role', 'search');
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'search';
+        searchInput.className = 'search-box-input';
+        searchInput.placeholder = 'Search by booking number...';
+        searchInput.setAttribute('aria-label', 'Search bookings by booking number');
+
+        const searchBtn = document.createElement('button');
+        searchBtn.type = 'submit';
+        searchBtn.className = 'btn-row-action primary';
+        searchBtn.textContent = 'Search';
+
+        searchWrap.appendChild(searchInput);
+        searchWrap.appendChild(searchBtn);
+        toolbar.appendChild(searchWrap);
+        appContent.appendChild(toolbar);
+
+        searchWrap.addEventListener('submit', (e) => {
+          e.preventDefault();
+          searchQuery = searchInput.value.trim();
+          currentPage = 1;
+          loadBookings();
+        });
+
+        // 4. Content Area (Table + Stacked Cards)
+        const contentWrap = document.createElement('div');
+        contentWrap.id = 'bookings-list-container';
+        appContent.appendChild(contentWrap);
+
+        // 5. Pagination Bar
+        const paginationBar = document.createElement('div');
+        paginationBar.className = 'pagination-bar';
+        paginationBar.style.display = 'none';
+
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'pagination-info';
+
+        const controlsWrap = document.createElement('div');
+        controlsWrap.className = 'pagination-controls';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'btn-page-nav';
+        prevBtn.textContent = 'Previous';
+        prevBtn.setAttribute('aria-label', 'Previous page');
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'btn-page-nav';
+        nextBtn.textContent = 'Next';
+        nextBtn.setAttribute('aria-label', 'Next page');
+
+        controlsWrap.appendChild(prevBtn);
+        controlsWrap.appendChild(nextBtn);
+        paginationBar.appendChild(pageInfo);
+        paginationBar.appendChild(controlsWrap);
+        appContent.appendChild(paginationBar);
+
+        prevBtn.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            loadBookings();
+          }
+        });
+
+        nextBtn.addEventListener('click', () => {
+          currentPage++;
+          loadBookings();
+        });
+
+        // Main Fetch and Render Function
+        async function loadBookings() {
+          contentWrap.innerHTML = '';
+          paginationBar.style.display = 'none';
+
+          if (typeof loadingSkeleton === 'function') {
+            contentWrap.appendChild(loadingSkeleton(3, 'table'));
+          } else {
+            const p = document.createElement('p');
+            p.className = 'summary-detail-label';
+            p.textContent = 'Loading bookings...';
+            contentWrap.appendChild(p);
+          }
+
+          try {
+            const params = new URLSearchParams();
+            params.set('status', currentTab);
+            params.set('page', currentPage);
+            params.set('limit', pageSize);
+            if (searchQuery) params.set('q', searchQuery);
+
+            const res = await apiRequest(`/bookings?${params.toString()}`);
+            contentWrap.innerHTML = '';
+
+            // Update Tab Counts
+            if (res.counts) {
+              if (tabButtons['ALL']) tabButtons['ALL'].querySelector('.filter-tab-count').textContent = res.counts.all || 0;
+              if (tabButtons['UPCOMING']) tabButtons['UPCOMING'].querySelector('.filter-tab-count').textContent = res.counts.upcoming || 0;
+              if (tabButtons['ACTIVE']) tabButtons['ACTIVE'].querySelector('.filter-tab-count').textContent = res.counts.active || 0;
+              if (tabButtons['COMPLETED']) tabButtons['COMPLETED'].querySelector('.filter-tab-count').textContent = res.counts.completed || 0;
+              if (tabButtons['CANCELLED']) tabButtons['CANCELLED'].querySelector('.filter-tab-count').textContent = res.counts.cancelled || 0;
+            }
+
+            const bookings = res.bookings || [];
+            const total = res.total || 0;
+            const totalPages = res.totalPages || 1;
+
+            if (bookings.length === 0) {
+              const empty = (typeof emptyState === 'function')
+                ? emptyState(
+                    'No Reservations Found',
+                    searchQuery
+                      ? `No bookings match "${searchQuery}". Clear your search query or switch tabs.`
+                      : `You have no ${currentTab.toLowerCase()} bookings at this time.`,
+                    'Find Parking',
+                    '../parking.html'
+                  )
+                : document.createElement('div');
+              contentWrap.appendChild(empty);
+              return;
+            }
+
+            // ----------------------------------------------------------------
+            // Desktop Table View (>= 768px)
+            // ----------------------------------------------------------------
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'data-table-container';
+
+            const table = document.createElement('table');
+            table.className = 'data-table';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+              <tr>
+                <th scope="col">Booking</th>
+                <th scope="col">Location</th>
+                <th scope="col">Slot</th>
+                <th scope="col">Date &amp; Time</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col" style="text-align: right;">Actions</th>
+              </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+
+            // ----------------------------------------------------------------
+            // Mobile Stacked Cards List (< 768px)
+            // ----------------------------------------------------------------
+            const cardsList = document.createElement('div');
+            cardsList.className = 'stacked-cards-list';
+
+            bookings.forEach((b) => {
+              // --- Build Table Row ---
+              const tr = document.createElement('tr');
+
+              // 1. Booking Cell
+              const tdBooking = document.createElement('td');
+              const bNum = document.createElement('strong');
+              bNum.className = 'receipt-value font-mono';
+              bNum.style.display = 'block';
+              bNum.textContent = b.bookingNumber || b._id;
+
+              const bDate = document.createElement('span');
+              bDate.className = 'summary-detail-label';
+              bDate.style.fontSize = '0.75rem';
+              bDate.textContent = new Date(b.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+              tdBooking.appendChild(bNum);
+              tdBooking.appendChild(bDate);
+              tr.appendChild(tdBooking);
+
+              // 2. Location Cell
+              const tdLoc = document.createElement('td');
+              tdLoc.textContent = b.locationId ? b.locationId.name : '—';
+              tr.appendChild(tdLoc);
+
+              // 3. Slot Cell
+              const tdSlot = document.createElement('td');
+              tdSlot.style.fontWeight = '500';
+              tdSlot.textContent = b.slotId ? b.slotId.slotNumber : '—';
+              tr.appendChild(tdSlot);
+
+              // 4. Schedule Cell
+              const tdSched = document.createElement('td');
+              const sDate = new Date(b.startTime);
+              const eDate = new Date(b.endTime);
+              tdSched.innerHTML = `
+                <div>${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+                <div class="summary-detail-label" style="font-size: 0.75rem;">${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${eDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+              `;
+              tr.appendChild(tdSched);
+
+              // 5. Amount Cell
+              const tdAmount = document.createElement('td');
+              tdAmount.style.fontWeight = '600';
+              tdAmount.textContent = `৳${b.totalAmount || 0}`;
+              tr.appendChild(tdAmount);
+
+              // 6. Status Cell
+              const tdStatus = document.createElement('td');
+              if (typeof statusBadge === 'function') {
+                tdStatus.appendChild(statusBadge(b.bookingStatus));
+              } else {
+                tdStatus.textContent = b.bookingStatus;
+              }
+              tr.appendChild(tdStatus);
+
+              // 7. Actions Cell
+              const tdActions = document.createElement('td');
+              tdActions.style.textAlign = 'right';
+              const actionsRow = document.createElement('div');
+              actionsRow.style.display = 'inline-flex';
+              actionsRow.style.gap = 'var(--space-2)';
+
+              // State-based actions
+              renderActionButtons(b, actionsRow);
+              tdActions.appendChild(actionsRow);
+              tr.appendChild(tdActions);
+
+              tbody.appendChild(tr);
+
+              // --- Build Mobile Stacked Card ---
+              const card = document.createElement('article');
+              card.className = 'stacked-card';
+
+              const cardHeader = document.createElement('div');
+              cardHeader.className = 'stacked-card-header';
+
+              const cardId = document.createElement('strong');
+              cardId.className = 'receipt-value font-mono';
+              cardId.textContent = b.bookingNumber || b._id;
+
+              cardHeader.appendChild(cardId);
+              if (typeof statusBadge === 'function') {
+                cardHeader.appendChild(statusBadge(b.bookingStatus));
+              }
+              card.appendChild(cardHeader);
+
+              const rLoc = createCardRow('Location', b.locationId ? b.locationId.name : '—');
+              const rSlot = createCardRow('Parking Slot', b.slotId ? `Bay ${b.slotId.slotNumber}` : '—');
+              const rTime = createCardRow(
+                'Schedule',
+                `${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${eDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
+              );
+              const rAmt = createCardRow('Total Amount', `৳${b.totalAmount || 0}`);
+
+              card.appendChild(rLoc);
+              card.appendChild(rSlot);
+              card.appendChild(rTime);
+              card.appendChild(rAmt);
+
+              const cardActions = document.createElement('div');
+              cardActions.className = 'stacked-card-actions';
+              renderActionButtons(b, cardActions);
+              card.appendChild(cardActions);
+
+              cardsList.appendChild(card);
+            });
+
+            table.appendChild(tbody);
+            tableWrap.appendChild(table);
+
+            contentWrap.appendChild(tableWrap);
+            contentWrap.appendChild(cardsList);
+
+            // Pagination Controls Update
+            paginationBar.style.display = 'flex';
+            const startIdx = (currentPage - 1) * pageSize + 1;
+            const endIdx = Math.min(currentPage * pageSize, total);
+            pageInfo.textContent = `Showing ${startIdx}–${endIdx} of ${total} reservations`;
+
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+
+          } catch (err) {
+            console.error('Failed to load bookings:', err);
+            contentWrap.innerHTML = '';
+            const errP = document.createElement('p');
+            errP.className = 'summary-error-box';
+            errP.textContent = err.message || 'Error loading reservations.';
+            contentWrap.appendChild(errP);
+          }
+        }
+
+        function createCardRow(label, value) {
+          const row = document.createElement('div');
+          row.className = 'stacked-card-row';
+
+          const l = document.createElement('span');
+          l.className = 'stacked-card-label';
+          l.textContent = label;
+
+          const v = document.createElement('span');
+          v.className = 'summary-detail-value';
+          v.textContent = value;
+
+          row.appendChild(l);
+          row.appendChild(v);
+          return row;
+        }
+
+        // Helper to attach state-based actions
+        function renderActionButtons(b, container) {
+          // 1. View Slip (PAID)
+          if (b.paymentStatus === 'PAID') {
+            const slipLink = document.createElement('a');
+            slipLink.href = `../booking-slip.html?id=${b._id}`;
+            slipLink.className = 'btn-row-action primary';
+            slipLink.textContent = 'View Slip';
+            container.appendChild(slipLink);
+          }
+
+          // 2. Pay Now (PENDING_PAYMENT)
+          if (b.bookingStatus === 'PENDING_PAYMENT') {
+            const payLink = document.createElement('a');
+            payLink.href = `../payment.html?bookingId=${b._id}`;
+            payLink.className = 'btn-row-action primary';
+            payLink.textContent = 'Pay Now';
+            container.appendChild(payLink);
+          }
+
+          // 3. Cancel (Allowed for CONFIRMED or PENDING_PAYMENT before start)
+          const now = new Date();
+          const start = new Date(b.startTime);
+          const isCancellableState = ['CONFIRMED', 'PENDING_PAYMENT'].includes(b.bookingStatus);
+          const hasNotStarted = now.getTime() < start.getTime();
+
+          if (isCancellableState && hasNotStarted) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-row-action danger';
+            cancelBtn.textContent = 'Cancel';
+
+            cancelBtn.addEventListener('click', async () => {
+              cancelBtn.disabled = true;
+              try {
+                // Fetch Cancellation Preview
+                const preview = await apiRequest(`/bookings/${b._id}/cancellation-preview`);
+
+                if (!preview.allowed) {
+                  if (typeof showToast === 'function') {
+                    showToast(preview.message, 'error');
+                  } else {
+                    alert(preview.message);
+                  }
+                  cancelBtn.disabled = false;
+                  return;
+                }
+
+                // Confirm Dialog with preview message and refund amount
+                const confirmMsg = `${preview.message}\n\nDo you want to confirm cancellation for reservation #${b.bookingNumber || b._id}?`;
+                const userConfirmed = (typeof confirmDialog === 'function')
+                  ? await confirmDialog('Cancel Reservation', confirmMsg, 'Cancel Booking', 'Keep Booking')
+                  : confirm(confirmMsg);
+
+                if (userConfirmed) {
+                  const cancelRes = await apiRequest(`/bookings/${b._id}/cancel`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: 'Customer requested cancellation from bookings portal' })
+                  });
+
+                  if (typeof showToast === 'function') {
+                    showToast(cancelRes.message || 'Booking cancelled successfully.', 'success');
+                  }
+
+                  // Refresh List
+                  loadBookings();
+                } else {
+                  cancelBtn.disabled = false;
+                }
+              } catch (err) {
+                console.error('Cancellation error:', err);
+                if (typeof showToast === 'function') {
+                  showToast(err.message || 'Failed to cancel reservation.', 'error');
+                } else {
+                  alert(err.message || 'Failed to cancel reservation.');
+                }
+                cancelBtn.disabled = false;
+              }
+            });
+
+            container.appendChild(cancelBtn);
+          }
+        }
+
+        // Initial Load
+        loadBookings();
+
+      } catch (err) {
+        console.error('Init bookings page error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initBookingsPage();
+    });
+  </script>
+</body>
+</html>

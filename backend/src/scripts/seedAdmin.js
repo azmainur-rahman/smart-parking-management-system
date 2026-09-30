@@ -15,7 +15,8 @@ const seedAdmin = async () => {
     await mongoose.connect(mongoURI);
     console.log('[Seed] Connected.');
 
-    const adminEmail = 'admin@smartparking.local';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@smartparking.local';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPass123!';
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
@@ -26,7 +27,7 @@ const seedAdmin = async () => {
       const admin = await User.create({
         name: 'System Admin',
         email: adminEmail,
-        password: 'AdminPass123!',
+        password: adminPassword,
         role: 'ADMIN',
         status: 'ACTIVE'
       });

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gate Entry &amp; Exit Control — Smart Parking</title>
+  <meta name="description" content="Vehicle barrier entry and exit validation console for parking facility managers.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/manager-shell.js"></script>
+
+  <script>
+    async function initManagerEntryExit() {
+      try {
+        const appContent = renderManagerShell('entry_exit');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Gate Operations';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Entry &amp; Exit Control';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Verify customer booking reservations, grant barrier entry, and record departure check-outs.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // 2. 2-Column Gate Layout
+        const layout = document.createElement('div');
+        layout.className = 'entry-exit-layout';
+
+        // --- Left Column: Verification Form ---
+        const leftCol = document.createElement('section');
+        leftCol.className = 'gate-control-card';
+        leftCol.setAttribute('aria-labelledby', 'gate-verify-heading');
+
+        const formTitle = document.createElement('h2');
+        formTitle.id = 'gate-verify-heading';
+        formTitle.className = 'summary-heading';
+        formTitle.style.fontSize = '1.125rem';
+        formTitle.textContent = 'Verify Reservation';
+        leftCol.appendChild(formTitle);
+
+        const form = document.createElement('form');
+        form.id = 'gate-verify-form';
+        form.noValidate = true;
+
+        const field = document.createElement('div');
+        field.className = 'form-field';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.htmlFor = 'booking-number-input';
+        label.textContent = 'Booking Number *';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'booking-number-input';
+        input.className = 'form-input';
+        input.placeholder = 'e.g. SP-20261001-000042';
+        input.required = true;
+        input.autocomplete = 'off';
+
+        field.appendChild(label);
+        field.appendChild(input);
+        form.appendChild(field);
+
+        const verifyBtn = document.createElement('button');
+        verifyBtn.type = 'submit';
+        verifyBtn.className = 'btn-proceed-payment';
+        verifyBtn.style.marginTop = 'var(--space-3)';
+        verifyBtn.textContent = 'Verify Booking';
+        form.appendChild(verifyBtn);
+
+        leftCol.appendChild(form);
+
+        // Camera QR Scanner Integration Placeholder
+        const scannerBox = document.createElement('div');
+        scannerBox.className = 'scanner-placeholder-box';
+
+        const scannerBadge = document.createElement('span');
+        scannerBadge.className = 'scanner-badge-text';
+        scannerBadge.textContent = 'Camera QR Scanner Integration Planned';
+
+        const scannerDesc = document.createElement('p');
+        scannerDesc.className = 'summary-detail-label';
+        scannerDesc.style.marginTop = 'var(--space-2)';
+        scannerDesc.textContent = 'Hardware camera and barcode scanner support will be available in future gate releases. Enter the booking code manually to verify now.';
+
+        scannerBox.appendChild(scannerBadge);
+        scannerBox.appendChild(scannerDesc);
+        leftCol.appendChild(scannerBox);
+
+        layout.appendChild(leftCol);
+
+        // --- Right Column: Result & Action Panel ---
+        const rightCol = document.createElement('section');
+        rightCol.className = 'gate-verification-card';
+        rightCol.id = 'gate-result-panel';
+        rightCol.setAttribute('aria-labelledby', 'gate-result-heading');
+
+        const resultTitle = document.createElement('h2');
+        resultTitle.id = 'gate-result-heading';
+        resultTitle.className = 'summary-heading';
+        resultTitle.style.fontSize = '1.125rem';
+        resultTitle.textContent = 'Verification Details';
+        rightCol.appendChild(resultTitle);
+
+        const resultContainer = document.createElement('div');
+        resultContainer.id = 'gate-result-content';
+
+        const emptyNotice = document.createElement('p');
+        emptyNotice.className = 'summary-detail-label';
+        emptyNotice.textContent = 'Enter a valid booking number on the left to verify customer reservation status, schedule window, and gate eligibility.';
+        resultContainer.appendChild(emptyNotice);
+
+        rightCol.appendChild(resultContainer);
+        layout.appendChild(rightCol);
+
+        appContent.appendChild(layout);
+
+        // Form Submit Handler
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const bNum = input.value.trim();
+          if (!bNum) {
+            input.focus();
+            return;
+          }
+
+          verifyBtn.disabled = true;
+          const origText = verifyBtn.textContent;
+          verifyBtn.textContent = 'Verifying...';
+          resultContainer.innerHTML = '<p class="summary-detail-label">Checking reservation records and facility access...</p>';
+
+          try {
+            const res = await apiRequest('/manager/verify-qr', {
+              method: 'POST',
+              body: JSON.stringify({ bookingNumber: bNum })
+            });
+
+            renderVerificationResult(res);
+
+          } catch (err) {
+            console.error('Verification error:', err);
+            resultContainer.innerHTML = '';
+
+            const errBanner = document.createElement('div');
+            errBanner.className = 'gate-result-status-banner is-invalid';
+
+            const errTitle = document.createElement('strong');
+            errTitle.textContent = 'Verification Failed';
+
+            const errText = document.createElement('span');
+            errText.textContent = err.message || 'Booking reservation could not be verified.';
+
+            errBanner.appendChild(errTitle);
+            errBanner.appendChild(errText);
+            resultContainer.appendChild(errBanner);
+          } finally {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = origText;
+          }
+        });
+
+        // Render Booking Verification Card
+        function renderVerificationResult(data) {
+          resultContainer.innerHTML = '';
+          const b = data.booking;
+          const isValidNow = data.validNow;
+
+          // Status Banner
+          const banner = document.createElement('div');
+          banner.className = `gate-result-status-banner ${isValidNow ? 'is-valid' : 'is-invalid'}`;
+
+          const bannerStatus = document.createElement('strong');
+          bannerStatus.textContent = isValidNow ? 'VALID RESERVATION (Eligible for Gate Access)' : `INELIGIBLE FOR GATE ACTION (${b.status})`;
+
+          banner.appendChild(bannerStatus);
+          resultContainer.appendChild(banner);
+
+          // Details List
+          const detailsList = document.createElement('div');
+          detailsList.className = 'summary-details-list';
+          detailsList.style.fontSize = '0.875rem';
+
+          const appendRow = (lbl, val, isHighlight = false) => {
+            const r = document.createElement('div');
+            r.className = 'summary-detail-row';
+            const l = document.createElement('span');
+            l.className = 'summary-detail-label';
+            l.textContent = lbl;
+
+            const v = document.createElement('span');
+            v.className = isHighlight ? 'summary-detail-value highlight' : 'summary-detail-value';
+            v.textContent = val;
+
+            r.appendChild(l);
+            r.appendChild(v);
+            detailsList.appendChild(r);
+          };
+
+          appendRow('Booking ID', b.bookingNumber);
+          appendRow('Current Status', b.status);
+          appendRow('Customer Name', b.customer ? b.customer.name : '—');
+          appendRow('Customer Phone', b.customer ? (b.customer.phone || '—') : '—');
+          appendRow('Vehicle Registration', b.vehicle ? b.vehicle.registrationNumber : '—', true);
+          appendRow('Vehicle Model', b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : '—');
+          appendRow('Allocated Bay', b.slot ? `Bay ${b.slot.slotNumber}` : '—', true);
+          appendRow('Facility', b.location ? b.location.name : '—');
+          appendRow('Zone / Unit', `${b.floor?.name || ''} — ${b.unit?.name || ''}`);
+
+          const sDate = new Date(b.schedule.startTime);
+          const eDate = new Date(b.schedule.endTime);
+          appendRow('Schedule Window', `${sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${eDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`);
+
+          appendRow('Payment Status', `${b.pricing?.paymentStatus} (৳${b.pricing?.totalAmount || 0})`);
+
+          if (b.entryTime) {
+            appendRow('Entry Time', `${new Date(b.entryTime).toLocaleString()}${b.entryManager ? ` (by ${b.entryManager})` : ''}`);
+          }
+
+          if (b.exitTime) {
+            appendRow('Exit Time', `${new Date(b.exitTime).toLocaleString()}${b.exitManager ? ` (by ${b.exitManager})` : ''}`);
+          }
+
+          resultContainer.appendChild(detailsList);
+
+          // Gate Action Controls (Entry / Exit)
+          const actionBox = document.createElement('div');
+          actionBox.style.marginTop = 'var(--space-5)';
+
+          if (b.status === 'CONFIRMED') {
+            const entryBtn = document.createElement('button');
+            entryBtn.type = 'button';
+            entryBtn.className = 'gate-action-btn-large btn-entry';
+            entryBtn.textContent = 'Grant Barrier Entry';
+
+            entryBtn.addEventListener('click', async () => {
+              entryBtn.disabled = true;
+              entryBtn.textContent = 'Recording Entry...';
+
+              try {
+                const entryRes = await apiRequest('/manager/entry', {
+                  method: 'POST',
+                  body: JSON.stringify({ bookingNumber: b.bookingNumber })
+                });
+
+                if (typeof showToast === 'function') {
+                  showToast(entryRes.message || 'Vehicle entry recorded successfully!', 'success');
+                }
+
+                // Re-verify to display updated ACTIVE state
+                const refreshRes = await apiRequest('/manager/verify-qr', {
+                  method: 'POST',
+                  body: JSON.stringify({ bookingNumber: b.bookingNumber })
+                });
+                renderVerificationResult(refreshRes);
+
+              } catch (err) {
+                console.error('Entry record error:', err);
+                if (typeof showToast === 'function') {
+                  showToast(err.message || 'Failed to record entry.', 'error');
+                } else {
+                  alert(err.message || 'Failed to record entry.');
+                }
+                entryBtn.disabled = false;
+                entryBtn.textContent = 'Grant Barrier Entry';
+              }
+            });
+
+            actionBox.appendChild(entryBtn);
+          } else if (b.status === 'ACTIVE') {
+            const exitBtn = document.createElement('button');
+            exitBtn.type = 'button';
+            exitBtn.className = 'gate-action-btn-large btn-exit';
+            exitBtn.textContent = 'Record Barrier Exit & Finalize';
+
+            exitBtn.addEventListener('click', async () => {
+              exitBtn.disabled = true;
+              exitBtn.textContent = 'Recording Exit...';
+
+              try {
+                const exitRes = await apiRequest('/manager/exit', {
+                  method: 'POST',
+                  body: JSON.stringify({ bookingNumber: b.bookingNumber })
+                });
+
+                if (typeof showToast === 'function') {
+                  showToast(exitRes.message || 'Vehicle exit recorded successfully!', 'success');
+                }
+
+                // Re-verify to display updated COMPLETED state
+                const refreshRes = await apiRequest('/manager/verify-qr', {
+                  method: 'POST',
+                  body: JSON.stringify({ bookingNumber: b.bookingNumber })
+                });
+                renderVerificationResult(refreshRes);
+
+              } catch (err) {
+                console.error('Exit record error:', err);
+                if (typeof showToast === 'function') {
+                  showToast(err.message || 'Failed to record exit.', 'error');
+                } else {
+                  alert(err.message || 'Failed to record exit.');
+                }
+                exitBtn.disabled = false;
+                exitBtn.textContent = 'Record Barrier Exit';
+              }
+            });
+
+            actionBox.appendChild(exitBtn);
+          } else if (b.status === 'COMPLETED') {
+            const notice = document.createElement('p');
+            notice.className = 'summary-detail-label';
+            notice.style.textAlign = 'center';
+            notice.textContent = 'This reservation is COMPLETED. Both entry and departure have been finalized.';
+            actionBox.appendChild(notice);
+          }
+
+          resultContainer.appendChild(actionBox);
+        }
+
+      } catch (err) {
+        console.error('Init manager entry/exit error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initManagerEntryExit();
+    });
+  </script>
+</body>
+</html>

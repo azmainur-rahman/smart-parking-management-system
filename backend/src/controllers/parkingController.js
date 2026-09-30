@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import ParkingLocation from '../models/ParkingLocation.js';
 import Floor from '../models/Floor.js';
@@ -69,7 +70,21 @@ export const getLocations = async (req, res) => {
   try {
     const filter = {};
 
-    if (req.query.status) {
+    let isAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded && decoded.role === 'ADMIN') {
+          isAdmin = true;
+        }
+      } catch (e) {
+        isAdmin = false;
+      }
+    }
+
+    if (isAdmin && req.query.status) {
       filter.status = req.query.status.toUpperCase();
     } else {
       filter.status = 'ACTIVE';

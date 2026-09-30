@@ -1,0 +1,558 @@
+/* ==========================================================================
+   Smart Parking Management System — Public Parking & Details Stylesheet
+   Strictly Editorial: Hairline borders, generous pacing, no gradients/shadows.
+   Mobile-first down to 320px, 44-48px touch targets, focus-visible states.
+   ========================================================================== */
+
+/* Main layout wrapper */
+.parking-main {
+  padding-block: var(--space-6) var(--space-8);
+  min-height: 70vh;
+}
+
+/* Page Header / Intro */
+.parking-header {
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-5);
+}
+
+.parking-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-1);
+}
+
+.parking-title {
+  font-size: clamp(1.875rem, 3.5vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: var(--space-2);
+}
+
+.parking-desc {
+  font-size: 1rem;
+  color: var(--color-muted);
+  max-width: 680px;
+}
+
+/* Search & Filter Card */
+.parking-search-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-5);
+  margin-bottom: var(--space-7);
+}
+
+.parking-search-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .parking-search-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .parking-search-form {
+    grid-template-columns: 2fr 1.2fr 1fr 1.2fr 1.2fr auto;
+    align-items: end;
+  }
+}
+
+.parking-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.parking-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink);
+}
+
+.parking-input,
+.parking-select {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+  width: 100%;
+}
+
+.parking-input:focus-visible,
+.parking-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+.parking-submit-btn {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 var(--space-6);
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid var(--color-ink);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.parking-submit-btn:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #FFFFFF;
+}
+
+.parking-submit-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Results Section Header */
+.results-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  gap: var(--space-2);
+}
+
+.results-count {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.results-filter-badge {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+/* Location Cards Grid */
+.location-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+}
+
+@media (min-width: 640px) {
+  .location-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .location-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Individual Location Card */
+.location-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: border-color 0.15s ease;
+}
+
+.location-card:hover {
+  border-color: var(--color-ink);
+}
+
+.location-card-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #EFECE5;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.location-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.location-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: #EFECE5;
+}
+
+.location-card-body {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.location-card-area {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  margin-bottom: var(--space-1);
+}
+
+.location-card-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+  margin-bottom: var(--space-2);
+}
+
+.location-card-desc {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.location-card-meta {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.location-card-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.location-slots-badge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+}
+
+.location-slots-badge.is-available {
+  border-color: #2D6A4F;
+  color: #2D6A4F;
+}
+
+.location-slots-badge.is-full {
+  border-color: #A8532E;
+  color: #A8532E;
+}
+
+.location-price-tag {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.location-card-action {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.location-card-action:hover {
+  background-color: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #FFFFFF;
+}
+
+.location-card-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Details Page Components (Breadcrumb, Floor Cards, Unit Cards)
+   ========================================================================== */
+
+/* Breadcrumb Navigation */
+.breadcrumb-nav {
+  margin-bottom: var(--space-5);
+}
+
+.breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+}
+
+.breadcrumb-item a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.breadcrumb-item a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.breadcrumb-separator {
+  color: var(--color-muted);
+  user-select: none;
+}
+
+.breadcrumb-current {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* Location Header Section in Details */
+.location-detail-panel {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.location-detail-header {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.location-detail-name {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 500;
+  margin-bottom: var(--space-2);
+}
+
+.location-detail-address {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+}
+
+.location-detail-facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.facility-pill {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Floor Selection Cards */
+.selection-section {
+  margin-bottom: var(--space-6);
+}
+
+.selection-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.floors-grid,
+.units-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .floors-grid,
+  .units-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .floors-grid,
+  .units-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Floor Card */
+.floor-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.floor-card:hover {
+  border-color: var(--color-ink);
+}
+
+.floor-card.is-selected {
+  border: 2px solid var(--color-accent);
+  background-color: #FAF5F0;
+}
+
+.floor-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.floor-card-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.floor-card-stats {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.floor-card-stats strong {
+  color: var(--color-ink);
+}
+
+/* Unit Card */
+.unit-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: border-color 0.15s ease;
+}
+
+.unit-card:hover {
+  border-color: var(--color-ink);
+}
+
+.unit-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.unit-card-code {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.unit-card-name {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.unit-card-stats {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.unit-card-action {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-ink);
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.unit-card-action:hover {
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+}
+
+.unit-card-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.unit-card-action.is-disabled {
+  background-color: #EFECE5;
+  color: var(--color-muted);
+  pointer-events: none;
+  border: 1px solid var(--color-border);
+}

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Analytical Reports — Smart Parking</title>
+  <meta name="description" content="Operational performance and occupancy analytics for parking facility managers.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/manager-shell.js"></script>
+
+  <script>
+    async function initManagerReports() {
+      try {
+        const appContent = renderManagerShell('reports');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Analytical Reports';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Operational Summary';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Review facility throughput, bay occupancy, cancellation rates, and financial collections.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // 2. Filter Bar (Facility, Date From, Date To)
+        const filterCard = document.createElement('form');
+        filterCard.className = 'manager-filter-grid';
+
+        const locWrap = document.createElement('div');
+        locWrap.className = 'form-field';
+        const locLabel = document.createElement('label');
+        locLabel.className = 'form-label';
+        locLabel.textContent = 'Facility Scope';
+        const locSelect = document.createElement('select');
+        locSelect.className = 'form-input';
+        locSelect.innerHTML = '<option value="">All Authorized Facilities</option>';
+        locWrap.appendChild(locLabel);
+        locWrap.appendChild(locSelect);
+        filterCard.appendChild(locWrap);
+
+        const fromWrap = document.createElement('div');
+        fromWrap.className = 'form-field';
+        const fromLabel = document.createElement('label');
+        fromLabel.className = 'form-label';
+        fromLabel.textContent = 'Date From';
+        const fromInput = document.createElement('input');
+        fromInput.type = 'date';
+        fromInput.className = 'form-input';
+        fromWrap.appendChild(fromLabel);
+        fromWrap.appendChild(fromInput);
+        filterCard.appendChild(fromWrap);
+
+        const toWrap = document.createElement('div');
+        toWrap.className = 'form-field';
+        const toLabel = document.createElement('label');
+        toLabel.className = 'form-label';
+        toLabel.textContent = 'Date To';
+        const toInput = document.createElement('input');
+        toInput.type = 'date';
+        toInput.className = 'form-input';
+        toWrap.appendChild(toLabel);
+        toWrap.appendChild(toInput);
+        filterCard.appendChild(toWrap);
+
+        appContent.appendChild(filterCard);
+
+        const actionsRow = document.createElement('div');
+        actionsRow.style.display = 'flex';
+        actionsRow.style.gap = 'var(--space-2)';
+        actionsRow.style.marginBottom = 'var(--space-5)';
+
+        const applyBtn = document.createElement('button');
+        applyBtn.type = 'button';
+        applyBtn.className = 'btn-row-action primary';
+        applyBtn.textContent = 'Generate Report';
+
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'btn-row-action';
+        resetBtn.textContent = 'Reset Range';
+
+        actionsRow.appendChild(applyBtn);
+        actionsRow.appendChild(resetBtn);
+        appContent.appendChild(actionsRow);
+
+        // 3. Reports Report Container
+        const reportContainer = document.createElement('div');
+        reportContainer.id = 'manager-report-content';
+        appContent.appendChild(reportContainer);
+
+        // Populate Locations Dropdown
+        async function loadLocations() {
+          try {
+            const locRes = await apiRequest('/manager/locations');
+            const locations = locRes.locations || [];
+            locations.forEach((loc) => {
+              const opt = document.createElement('option');
+              opt.value = loc._id;
+              opt.textContent = `${loc.name} (${loc.address?.area || loc.address?.city || ''})`;
+              locSelect.appendChild(opt);
+            });
+          } catch (e) {
+            console.error('Failed to load facilities:', e);
+          }
+        }
+
+        // Fetch & Render Summary Report
+        async function fetchReport() {
+          reportContainer.innerHTML = '';
+          if (typeof loadingSkeleton === 'function') {
+            reportContainer.appendChild(loadingSkeleton(4, 'card'));
+          }
+
+          try {
+            const params = new URLSearchParams();
+            if (locSelect.value) params.set('locationId', locSelect.value);
+            if (fromInput.value) params.set('from', fromInput.value);
+            if (toInput.value) params.set('to', toInput.value);
+
+            const res = await apiRequest(`/manager/reports/summary?${params.toString()}`);
+            const report = res.report || {};
+
+            reportContainer.innerHTML = '';
+
+            // Metric Cards Grid
+            const statGrid = document.createElement('section');
+            statGrid.className = 'report-stat-grid';
+
+            statGrid.appendChild(createStat('Total Reservations', report.totalBookings || 0));
+            statGrid.appendChild(createStat('Confirmed Bookings', report.confirmed || 0));
+            statGrid.appendChild(createStat('Active Sessions', report.active || 0));
+            statGrid.appendChild(createStat('Completed Sessions', report.completed || 0));
+            statGrid.appendChild(createStat('Cancelled / Expired', report.cancelled || 0));
+            statGrid.appendChild(createStat('Total Revenue', `৳${report.revenue || 0}`));
+            statGrid.appendChild(createStat('Occupied Bays', report.occupiedSlots || 0));
+            statGrid.appendChild(createStat('Available Bays', report.availableSlots || 0));
+
+            reportContainer.appendChild(statGrid);
+
+            // Performance Metrics Table
+            const perfSection = document.createElement('section');
+            perfSection.style.marginTop = 'var(--space-6)';
+
+            const perfHeading = document.createElement('h2');
+            perfHeading.className = 'section-title';
+            perfHeading.style.fontSize = '1.125rem';
+            perfHeading.textContent = 'Analytical Efficiency Breakdown';
+            perfSection.appendChild(perfHeading);
+
+            const totalSlots = (report.occupiedSlots || 0) + (report.availableSlots || 0);
+            const occupancyRate = totalSlots > 0 ? Math.round(((report.occupiedSlots || 0) / totalSlots) * 100) : 0;
+            const completionRate = report.totalBookings > 0 ? Math.round(((report.completed || 0) / report.totalBookings) * 100) : 0;
+            const cancellationRate = report.totalBookings > 0 ? Math.round(((report.cancelled || 0) / report.totalBookings) * 100) : 0;
+
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'data-table-container';
+            tableWrap.style.display = 'block';
+
+            const table = document.createElement('table');
+            table.className = 'data-table';
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th scope="col">Operational Dimension</th>
+                  <th scope="col">Observed Metric</th>
+                  <th scope="col">Benchmark Interpretation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Current Bay Occupancy</strong></td>
+                  <td><strong>${occupancyRate}%</strong> (${report.occupiedSlots} of ${totalSlots} total bays)</td>
+                  <td class="summary-detail-label">Real-time ratio of operational spaces currently parked.</td>
+                </tr>
+                <tr>
+                  <td><strong>Fulfillment / Completion Rate</strong></td>
+                  <td><strong>${completionRate}%</strong> (${report.completed} fulfilled)</td>
+                  <td class="summary-detail-label">Percentage of created reservations successfully checked out.</td>
+                </tr>
+                <tr>
+                  <td><strong>Cancellation Ratio</strong></td>
+                  <td><strong>${cancellationRate}%</strong> (${report.cancelled} revoked)</td>
+                  <td class="summary-detail-label">Customer reservation cancellations under the 2-hour refund policy.</td>
+                </tr>
+                <tr>
+                  <td><strong>Financial Realization</strong></td>
+                  <td><strong>৳${report.revenue || 0}</strong></td>
+                  <td class="summary-detail-label">Gross settled parking fees across confirmed customer checkouts.</td>
+                </tr>
+              </tbody>
+            `;
+
+            tableWrap.appendChild(table);
+            perfSection.appendChild(tableWrap);
+            reportContainer.appendChild(perfSection);
+
+          } catch (err) {
+            console.error('Failed to load summary report:', err);
+            reportContainer.innerHTML = '';
+            const errP = document.createElement('p');
+            errP.className = 'summary-error-box';
+            errP.textContent = err.message || 'Error generating summary report.';
+            reportContainer.appendChild(errP);
+          }
+        }
+
+        function createStat(lbl, val) {
+          const card = document.createElement('div');
+          card.className = 'report-stat-card';
+          card.innerHTML = `
+            <div class="report-stat-label">${lbl}</div>
+            <div class="report-stat-value">${val}</div>
+          `;
+          return card;
+        }
+
+        applyBtn.addEventListener('click', fetchReport);
+        resetBtn.addEventListener('click', () => {
+          locSelect.value = '';
+          fromInput.value = '';
+          toInput.value = '';
+          fetchReport();
+        });
+
+        await loadLocations();
+        await fetchReport();
+
+      } catch (err) {
+        console.error('Init manager reports error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initManagerReports();
+    });
+  </script>
+</body>
+</html>

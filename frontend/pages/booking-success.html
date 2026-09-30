@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservation Confirmed — Smart Parking</title>
+  <meta name="description" content="Your parking reservation is confirmed and paid. Access your parking pass and facility details.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/booking.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <!-- Global Public Site Header Placeholder -->
+  <header id="site-header"></header>
+
+  <!-- Main Landmark -->
+  <main id="main-content" class="booking-page-main">
+    <div class="container">
+      
+      <!-- Confirmation Card Container -->
+      <article class="success-page-panel" id="success-panel">
+        
+        <!-- Loading State -->
+        <div id="success-loading-state" style="text-align: center; padding: var(--space-6);">
+          <p class="summary-detail-label">Verifying reservation confirmation details...</p>
+        </div>
+
+        <!-- Pending / Unconfirmed Notice Card (Hidden by Default) -->
+        <div id="unconfirmed-state-card" style="display: none; text-align: center;">
+          <header class="success-header-block" style="border-bottom: none;">
+            <p class="booking-eyebrow" style="color: var(--color-accent);" id="unconfirmed-eyebrow">Attention Required</p>
+            <h1 class="success-main-title" id="unconfirmed-title">Payment Not Finalized</h1>
+            <p class="booking-desc" id="unconfirmed-desc" style="max-width: 500px; margin-inline: auto;">
+              This reservation has not been marked as paid or confirmed. Please complete checkout to secure your allocated slot.
+            </p>
+          </header>
+
+          <div class="success-actions-row" style="justify-content: center;">
+            <a href="payment.html" id="btn-complete-payment-link" class="btn btn-primary" style="min-height: 48px; line-height: 46px; padding-inline: var(--space-6);">
+              Complete Payment
+            </a>
+            <a href="customer/dashboard.html" class="btn btn-secondary" style="min-height: 48px; line-height: 46px; padding-inline: var(--space-6);">
+              Go to Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- Confirmed & Paid Content View -->
+        <div id="confirmed-state-content" style="display: none;">
+          
+          <!-- Header -->
+          <header class="success-header-block">
+            <p class="success-eyebrow">Reservation Confirmed</p>
+            <h1 class="success-main-title">Parking Bay Secured</h1>
+            <div id="confirmed-booking-number" class="success-booking-number-badge">SP-00000000-000000</div>
+          </header>
+
+          <!-- Status & Verification Row -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border);">
+            <div>
+              <span class="summary-detail-label" style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Booking Status</span>
+              <span id="badge-booking-status"></span>
+            </div>
+            <div style="text-align: right;">
+              <span class="summary-detail-label" style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Payment Status</span>
+              <span id="badge-payment-status"></span>
+            </div>
+          </div>
+
+          <!-- Full Reservation Details List -->
+          <section class="success-details-card" aria-labelledby="details-heading">
+            <h2 id="details-heading" class="sr-only">Reservation Summary</h2>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Facility</span>
+              <span id="dt-facility" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Address</span>
+              <span id="dt-address" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Floor &amp; Unit</span>
+              <span id="dt-floor-unit" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Allocated Bay</span>
+              <span id="dt-slot" class="success-detail-value" style="font-family: var(--font-display); font-size: 1.125rem; color: var(--color-accent);">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Registered Vehicle</span>
+              <span id="dt-vehicle" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Vehicle Registration No.</span>
+              <span id="dt-reg-no" class="success-detail-value" style="font-family: monospace; letter-spacing: 0.05em;">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Reservation Schedule</span>
+              <span id="dt-schedule" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row">
+              <span class="success-detail-label">Duration</span>
+              <span id="dt-duration" class="success-detail-value">—</span>
+            </div>
+
+            <div class="success-detail-row" style="border-top: 1px solid var(--color-border); margin-top: var(--space-3); padding-top: var(--space-3);">
+              <span class="success-detail-label" style="font-weight: 600; color: var(--color-ink);">Total Paid</span>
+              <span id="dt-total-paid" class="success-detail-value" style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: #2D6A4F;">৳0</span>
+            </div>
+          </section>
+
+          <!-- Primary Actions -->
+          <footer class="success-actions-row">
+            <a href="booking-slip.html" id="btn-view-slip-link" class="btn btn-primary" style="min-height: 48px; line-height: 46px; padding-inline: var(--space-5);">
+              View Booking Slip
+            </a>
+            <a href="customer/dashboard.html" class="btn btn-secondary" style="min-height: 48px; line-height: 46px; padding-inline: var(--space-5);">
+              Go to Dashboard
+            </a>
+            <a href="parking.html" class="btn btn-secondary" style="min-height: 48px; line-height: 46px; padding-inline: var(--space-5);">
+              Find More Parking
+            </a>
+          </footer>
+
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <!-- Global Public Site Footer Placeholder -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/site-chrome.js"></script>
+  <script src="../js/navbar.js"></script>
+
+  <script>
+    async function initBookingSuccessPage() {
+      // 1. Auth Guard
+      if (typeof requireLogin === 'function') {
+        if (!requireLogin()) return;
+      }
+
+      // 2. Render Shared Chrome
+      if (typeof renderSiteChrome === 'function') {
+        renderSiteChrome('parking');
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const bookingId = urlParams.get('bookingId');
+
+      if (!bookingId) {
+        window.location.href = 'parking.html';
+        return;
+      }
+
+      // DOM Elements
+      const loadingState = document.getElementById('success-loading-state');
+      const unconfirmedCard = document.getElementById('unconfirmed-state-card');
+      const unconfirmedTitle = document.getElementById('unconfirmed-title');
+      const unconfirmedDesc = document.getElementById('unconfirmed-desc');
+      const btnCompleteLink = document.getElementById('btn-complete-payment-link');
+      const confirmedContent = document.getElementById('confirmed-state-content');
+
+      const confirmedBookingNumber = document.getElementById('confirmed-booking-number');
+      const badgeBookingStatus = document.getElementById('badge-booking-status');
+      const badgePaymentStatus = document.getElementById('badge-payment-status');
+
+      const dtFacility = document.getElementById('dt-facility');
+      const dtAddress = document.getElementById('dt-address');
+      const dtFloorUnit = document.getElementById('dt-floor-unit');
+      const dtSlot = document.getElementById('dt-slot');
+      const dtVehicle = document.getElementById('dt-vehicle');
+      const dtRegNo = document.getElementById('dt-reg-no');
+      const dtSchedule = document.getElementById('dt-schedule');
+      const dtDuration = document.getElementById('dt-duration');
+      const dtTotalPaid = document.getElementById('dt-total-paid');
+
+      try {
+        const res = await apiRequest(`/bookings/${bookingId}`);
+        const booking = res.booking;
+
+        if (!booking) {
+          throw new Error('Booking could not be loaded.');
+        }
+
+        loadingState.style.display = 'none';
+
+        // Check if confirmed and paid
+        const isConfirmed = booking.bookingStatus === 'CONFIRMED';
+        const isPaid = booking.paymentStatus === 'PAID';
+
+        if (!isConfirmed || !isPaid) {
+          // Render unconfirmed state
+          unconfirmedTitle.textContent = isPaid ? 'Reservation Confirmation Pending' : 'Payment Incomplete';
+          unconfirmedDesc.textContent = isPaid
+            ? `Your payment has been received, but the reservation status is currently ${booking.bookingStatus}. Please check your customer dashboard for status updates.`
+            : `This reservation is currently ${booking.bookingStatus} with payment status ${booking.paymentStatus}. Please complete payment before the provisional hold expires.`;
+          
+          btnCompleteLink.href = `payment.html?bookingId=${booking._id}`;
+          unconfirmedCard.style.display = 'block';
+          return;
+        }
+
+        // Render Confirmed State
+        confirmedBookingNumber.textContent = booking.bookingNumber || booking._id;
+
+        // Status Badges
+        if (typeof statusBadge === 'function') {
+          badgeBookingStatus.replaceChildren(statusBadge(booking.bookingStatus));
+          badgePaymentStatus.replaceChildren(statusBadge(booking.paymentStatus));
+        } else {
+          badgeBookingStatus.textContent = booking.bookingStatus;
+          badgePaymentStatus.textContent = booking.paymentStatus;
+        }
+
+        // Facility & Address
+        if (booking.locationId) {
+          dtFacility.textContent = booking.locationId.name || 'Facility';
+          const addr = booking.locationId.address;
+          if (addr) {
+            dtAddress.textContent = `${addr.addressLine || ''}, ${addr.area || ''}, ${addr.city || ''}`.replace(/^,\s*|,\s*$/g, '');
+          } else {
+            dtAddress.textContent = '—';
+          }
+        } else {
+          dtFacility.textContent = 'Facility';
+          dtAddress.textContent = '—';
+        }
+
+        // Floor & Unit
+        const floorName = booking.floorId ? booking.floorId.name : 'Floor';
+        const unitName = booking.unitId ? `${booking.unitId.name} (${booking.unitId.code || ''})` : 'Unit';
+        dtFloorUnit.textContent = `${floorName} — ${unitName}`;
+
+        // Slot
+        dtSlot.textContent = booking.slotId ? `Bay ${booking.slotId.slotNumber}` : 'Allocated Bay';
+
+        // Vehicle
+        if (booking.vehicleId) {
+          const v = booking.vehicleId;
+          dtVehicle.textContent = `${v.brand || ''} ${v.model || ''} (${v.vehicleType || ''})`.trim();
+          dtRegNo.textContent = v.registrationNumber || '—';
+        } else {
+          dtVehicle.textContent = 'Registered Vehicle';
+          dtRegNo.textContent = '—';
+        }
+
+        // Schedule & Duration
+        const sStart = new Date(booking.startTime);
+        const sEnd = new Date(booking.endTime);
+        dtSchedule.textContent = `${sStart.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}: ${sStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${sEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+        const durLabel = booking.durationType === 'DAILY'
+          ? (booking.duration === 1 ? '1 Day (24h)' : `${booking.duration} Days`)
+          : (booking.duration === 1 ? '1 Hour' : `${booking.duration} Hours`);
+        dtDuration.textContent = durLabel;
+
+        // Total Paid
+        dtTotalPaid.textContent = `৳${booking.totalAmount || 0}`;
+
+        const btnViewSlipLink = document.getElementById('btn-view-slip-link');
+        if (btnViewSlipLink) {
+          btnViewSlipLink.href = `booking-slip.html?id=${booking._id}`;
+        }
+
+        confirmedContent.style.display = 'block';
+
+      } catch (err) {
+        console.error('Success page error:', err);
+        loadingState.textContent = '';
+        const errNotice = document.createElement('p');
+        errNotice.className = 'summary-error-box';
+        errNotice.textContent = err.message || 'Unable to retrieve reservation confirmation.';
+        loadingState.appendChild(errNotice);
+
+        const dashLink = document.createElement('a');
+        dashLink.href = 'customer/dashboard.html';
+        dashLink.className = 'btn btn-secondary';
+        dashLink.style.marginTop = 'var(--space-4)';
+        dashLink.style.display = 'inline-block';
+        dashLink.textContent = 'Return to Dashboard';
+        loadingState.appendChild(dashLink);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initBookingSuccessPage();
+      } catch (err) {
+        console.error('Booking success init error:', err);
+      }
+    });
+  </script>
+</body>
+</html>
