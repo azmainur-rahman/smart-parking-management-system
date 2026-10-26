@@ -215,21 +215,74 @@
   margin-top: var(--space-1);
 }
 
+/* Sidebar Brand Link & Logo */
+.sidebar-brand-link {
+  display: block;
+  text-decoration: none;
+  margin-bottom: var(--space-3);
+  transition: transform 0.2s ease;
+}
+
+.sidebar-brand-link:hover {
+  transform: scale(1.02);
+}
+
+.sidebar-logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
 /* --------------------------------------------------------------------------
-   Stat Blocks Grid
+   Stat Blocks Grid (Interactive, Vector-Enabled, Animated)
    -------------------------------------------------------------------------- */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
 }
 
 .stat-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--space-5);
-  background-color: var(--color-paper);
+  background-color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  animation: spFadeSlideUp 0.35s ease forwards;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+}
+
+.stat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.stat-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  background-color: #F6F4EE;
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.stat-icon-wrap svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
 }
 
 .stat-label {
@@ -243,12 +296,19 @@
 
 .stat-value {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--color-ink);
+  line-height: 1.1;
+  margin-top: var(--space-1);
+}
+
+.stat-subtext {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-muted);
   margin-top: var(--space-2);
-  line-height: 1;
 }
 
 /* --------------------------------------------------------------------------
@@ -515,15 +575,19 @@
    Desktop Data Table & Mobile Stacked Cards
    -------------------------------------------------------------------------- */
 .data-table-container {
-  display: none;
+  display: block;
+  width: 100%;
   background-color: #FFFFFF;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 768px) {
-  .data-table-container {
-    display: block;
+@media (max-width: 767px) {
+  .data-table-container:has(~ .stacked-cards-list),
+  .data-table-container:has(+ .stacked-cards-list) {
+    display: none;
   }
 }
 
@@ -698,4 +762,424 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ==========================================================================
+   SMART PARKING 2.0: MODERN DASHBOARD ANIMATIONS & COMMAND CENTER COMPONENTS
+   ========================================================================== */
+
+/* Keyframe Animations */
+@keyframes spFadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spRadarPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 7px rgba(46, 125, 50, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+@keyframes spPulseSlow {
+  0%, 100% {
+    opacity: 1;
+    border-color: var(--color-accent);
+  }
+  50% {
+    opacity: 0.75;
+    border-color: #00B4D8;
+  }
+}
+
+@keyframes spShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Smart Parking Command Center Hero Card */
+.sp-hero-banner {
+  background-color: #181E26;
+  color: #FFFFFF;
+  border: 1px solid #2B3442;
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  animation: spFadeSlideUp 0.3s ease forwards;
+}
+
+.sp-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .sp-hero-grid {
+    grid-template-columns: 1.35fr 1fr;
+  }
+}
+
+.sp-hero-media {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid #364152;
+  aspect-ratio: 16 / 10;
+  background-color: #0E1217;
+}
+
+.sp-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sp-hero-img-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sp-hero-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sp-hero-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sp-telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(33, 40, 50, 0.9);
+  border: 1px solid #364152;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #A3E635;
+}
+
+.sp-telemetry-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #22C55E;
+  animation: spRadarPulse 2s infinite ease-in-out;
+}
+
+.sp-hero-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: #94A3B8;
+  max-width: 680px;
+  margin-bottom: var(--space-5);
+  line-height: 1.5;
+}
+
+/* Quick Action Shortcuts */
+.sp-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.sp-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-decoration: none;
+  min-height: 42px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sp-action-btn-primary {
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+  border: 1px solid var(--color-accent);
+}
+
+.sp-action-btn-primary:hover {
+  background-color: #C05E32;
+  border-color: #C05E32;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+.sp-action-btn-secondary {
+  background-color: #242B35;
+  color: #E2E8F0;
+  border: 1px solid #364152;
+}
+
+.sp-action-btn-secondary:hover {
+  background-color: #2F3846;
+  border-color: #64748B;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+.sp-action-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+/* Live Active Parking Session Card */
+.sp-active-pass-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid #22C55E;
+  border-radius: var(--radius);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  box-sizing: border-box;
+  animation: spFadeSlideUp 0.35s ease forwards;
+}
+
+.sp-pass-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sp-pass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #15803D;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.sp-pass-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .sp-pass-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.sp-bay-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+  background-color: #181E26;
+  color: #FFFFFF;
+  border-radius: var(--radius);
+  border: 1px solid #2B3442;
+  min-width: 100px;
+  text-align: center;
+}
+
+.sp-bay-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94A3B8;
+}
+
+.sp-bay-number {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #38BDF8;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.sp-pass-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sp-pass-facility {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.sp-pass-vehicle {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.sp-pass-time {
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+/* Nearby Available Facilities Grid */
+.sp-facilities-section {
+  margin-bottom: var(--space-7);
+}
+
+.sp-facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.sp-facility-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  animation: spFadeSlideUp 0.4s ease forwards;
+}
+
+.sp-facility-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+}
+
+.sp-facility-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.sp-facility-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.sp-facility-area {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.sp-open-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #15803D;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+
+.sp-facility-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.sp-facility-rate {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.sp-facility-btn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+}
+
+.sp-facility-btn:hover {
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+  border-color: var(--color-accent);
+}
+
 

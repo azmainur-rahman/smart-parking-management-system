@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="240" height="50" fill="none">
+  <!-- Smart Parking Connected Icon Badge -->
+  <g id="logo-badge" transform="translate(4, 5)">
+    <!-- Badge Background -->
+    <rect width="40" height="40" rx="10" fill="#242B35"/>
+    <rect x="0.5" y="0.5" width="39" height="39" rx="9.5" stroke="#E27344" stroke-width="1.5"/>
+
+    <!-- Wireless IoT Sensor Waves -->
+    <path d="M 28 11 A 8 8 0 0 1 33 16" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 31 8 A 13 13 0 0 1 37 14" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1 3"/>
+
+    <!-- Stylized 'P' & Connected Car Fusion -->
+    <path d="M 12 30 V 12 H 21.5 C 24.5 12 26.5 13.8 26.5 16.5 C 26.5 19.2 24.5 21 21.5 21 H 16.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Mini Car Indicator in Bay -->
+    <path d="M 19 28 C 19 26 21 25 24 25 C 27 25 29 26 29 28 L 30 30 H 18 L 19 28 Z" fill="#E27344"/>
+    <circle cx="21" cy="30" r="1.5" fill="#FFFFFF"/>
+    <circle cx="27" cy="30" r="1.5" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Typography -->
+  <g id="logo-text" transform="translate(54, 12)">
+    <!-- Main Brand Name -->
+    <text x="0" y="16" font-family="'Inter', -apple-system, sans-serif" font-size="16" font-weight="800" letter-spacing="0.06em" fill="#FFFFFF">
+      SMART<tspan fill="#E27344" font-weight="800">PARKING</tspan>
+    </text>
+    
+    <!-- Tagline / Subtitle -->
+    <text x="1" y="27" font-family="'Inter', -apple-system, sans-serif" font-size="8" font-weight="600" letter-spacing="0.16em" fill="#94A3B8">
+      IOT MANAGEMENT SYSTEM
+    </text>
+  </g>
+</svg>

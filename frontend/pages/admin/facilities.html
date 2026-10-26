@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking Facilities &amp; Slots — Smart Parking Admin</title>
+  <meta name="description" content="Configure commercial parking locations, appoint managers, and manage bay inventory.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
+  <!-- Google Fonts: Fraunces & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/admin-shell.js"></script>
+
+  <script>
+    async function initAdminFacilities() {
+      try {
+        const appContent = renderAdminShell('facilities');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Infrastructure Oversight';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Parking Facilities & Bays';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Create parking structures, appoint facility managers, and oversee floor and slot layouts.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'admin-facilities-container';
+        appContent.appendChild(container);
+
+        // Action bar
+        const actionBar = document.createElement('div');
+        actionBar.style.display = 'flex';
+        actionBar.style.justifyContent = 'space-between';
+        actionBar.style.alignItems = 'center';
+        actionBar.style.marginBottom = 'var(--space-5)';
+
+        const countLabel = document.createElement('span');
+        countLabel.id = 'facility-count-label';
+        countLabel.style.fontSize = 'var(--text-sm)';
+        countLabel.style.color = 'var(--color-ink-muted)';
+        countLabel.textContent = 'Loading facilities...';
+        actionBar.appendChild(countLabel);
+
+        const addLocBtn = document.createElement('button');
+        addLocBtn.type = 'button';
+        addLocBtn.className = 'btn btn-primary';
+        addLocBtn.textContent = '+ Add New Facility';
+        addLocBtn.addEventListener('click', () => showAddFacilityModal());
+        actionBar.appendChild(addLocBtn);
+
+        container.appendChild(actionBar);
+
+        // Facilities Grid Mount
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+        grid.style.gap = 'var(--space-4)';
+        container.appendChild(grid);
+
+        let allManagers = [];
+
+        async function loadFacilities() {
+          grid.innerHTML = '<div style="padding: 20px; color: var(--color-ink-muted);">Loading facilities and managers...</div>';
+
+          try {
+            const [locRes, mgrRes] = await Promise.all([
+              apiRequest('/parking/locations'),
+              apiRequest('/admin/managers')
+            ]);
+
+            const locations = locRes.locations || [];
+            allManagers = mgrRes.managers || [];
+
+            countLabel.textContent = `${locations.length} commercial facilities active`;
+            grid.innerHTML = '';
+
+            if (locations.length === 0) {
+              grid.innerHTML = '<div style="padding: 40px; background: #fff; border: 1px solid var(--color-border); grid-column: 1/-1; text-align: center;">No parking facilities configured yet.</div>';
+              return;
+            }
+
+            locations.forEach(loc => {
+              const card = document.createElement('div');
+              card.style.background = '#FFFFFF';
+              card.style.border = '1px solid var(--color-border)';
+              card.style.padding = 'var(--space-5)';
+              card.style.display = 'flex';
+              card.style.flexDirection = 'column';
+              card.style.justifyContent = 'space-between';
+
+              const top = document.createElement('div');
+
+              const statusBadge = document.createElement('span');
+              statusBadge.className = 'badge badge-success';
+              statusBadge.style.fontSize = '10px';
+              statusBadge.style.marginBottom = 'var(--space-2)';
+              statusBadge.style.display = 'inline-block';
+              statusBadge.textContent = loc.status || 'ACTIVE';
+
+              const locName = document.createElement('h2');
+              locName.style.fontFamily = 'var(--font-heading)';
+              locName.style.fontSize = 'var(--text-lg)';
+              locName.style.margin = '0 0 var(--space-2) 0';
+              locName.textContent = loc.name;
+
+              const locAddress = document.createElement('p');
+              locAddress.style.fontSize = 'var(--text-xs)';
+              locAddress.style.color = 'var(--color-ink-muted)';
+              locAddress.style.marginBottom = 'var(--space-3)';
+              const addr = loc.address || {};
+              locAddress.textContent = `${addr.addressLine || ''}, ${addr.area || ''}, ${addr.city || ''}`;
+
+              // Managers Assigned
+              const mgrSection = document.createElement('div');
+              mgrSection.style.paddingTop = 'var(--space-3)';
+              mgrSection.style.borderTop = '1px solid var(--color-border)';
+              mgrSection.style.marginBottom = 'var(--space-4)';
+
+              const mgrTitle = document.createElement('strong');
+              mgrTitle.style.display = 'block';
+              mgrTitle.style.fontSize = '11px';
+              mgrTitle.style.textTransform = 'uppercase';
+              mgrTitle.style.letterSpacing = '0.05em';
+              mgrTitle.style.color = 'var(--color-ink-muted)';
+              mgrTitle.style.marginBottom = 'var(--space-2)';
+              mgrTitle.textContent = 'Assigned Facility Managers:';
+
+              const mgrList = document.createElement('div');
+              const assigned = loc.managerIds || [];
+              if (assigned.length === 0) {
+                mgrList.innerHTML = '<span style="font-size: 11px; color: #b33;">No manager assigned</span>';
+              } else {
+                mgrList.innerHTML = assigned.map(m => `
+                  <span class="badge" style="background: var(--color-surface); border: 1px solid var(--color-border); font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">
+                    ${m.name || m.email || 'Manager'}
+                  </span>
+                `).join('');
+              }
+
+              mgrSection.appendChild(mgrTitle);
+              mgrSection.appendChild(mgrList);
+
+              top.appendChild(statusBadge);
+              top.appendChild(locName);
+              top.appendChild(locAddress);
+              top.appendChild(mgrSection);
+
+              // Bottom Actions
+              const bottom = document.createElement('div');
+              bottom.style.display = 'flex';
+              bottom.style.gap = 'var(--space-2)';
+              bottom.style.flexWrap = 'wrap';
+
+              const editBtn = document.createElement('button');
+              editBtn.type = 'button';
+              editBtn.className = 'btn btn-primary';
+              editBtn.style.fontSize = '11px';
+              editBtn.style.padding = '4px 10px';
+              editBtn.textContent = 'Edit & Layout';
+              editBtn.onclick = () => showEditFacilityModal(loc);
+
+              const assignBtn = document.createElement('button');
+              assignBtn.type = 'button';
+              assignBtn.className = 'btn btn-secondary';
+              assignBtn.style.fontSize = '11px';
+              assignBtn.style.padding = '4px 8px';
+              assignBtn.textContent = 'Appoint Managers';
+              assignBtn.onclick = () => showAssignManagerModal(loc);
+
+              const viewFloorsBtn = document.createElement('a');
+              viewFloorsBtn.className = 'btn btn-secondary';
+              viewFloorsBtn.style.fontSize = '11px';
+              viewFloorsBtn.style.padding = '4px 8px';
+              viewFloorsBtn.href = `../parking-details.html?id=${loc._id}`;
+              viewFloorsBtn.textContent = 'Customer Layout';
+
+              bottom.appendChild(editBtn);
+              bottom.appendChild(assignBtn);
+              bottom.appendChild(viewFloorsBtn);
+
+              card.appendChild(top);
+              card.appendChild(bottom);
+              grid.appendChild(card);
+            });
+
+          } catch (err) {
+            grid.innerHTML = `<div class="error-notice">Failed to load facilities: ${err.message}</div>`;
+          }
+        }
+
+        // ====================================================================
+        // ADD NEW FACILITY MODAL (With Multi-Floor and Multi-Unit Builder)
+        // ====================================================================
+        function showAddFacilityModal() {
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.inset = '0';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.55)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '9999';
+          overlay.style.padding = 'var(--space-4)';
+
+          const modal = document.createElement('div');
+          modal.style.background = '#FFFFFF';
+          modal.style.border = '1px solid var(--color-border)';
+          modal.style.padding = 'var(--space-6)';
+          modal.style.width = '100%';
+          modal.style.maxWidth = '680px';
+          modal.style.maxHeight = '90vh';
+          modal.style.overflowY = 'auto';
+          modal.style.boxSizing = 'border-box';
+
+          let nextFloorId = 2;
+          let nextUnitId = 2;
+
+          let floorsState = [
+            {
+              id: 1,
+              name: 'Floor 1',
+              floorNumber: 1,
+              units: [
+                { id: 1, name: 'Unit A', code: 'A', carBays: 8, motoBays: 2, bays: 10 }
+              ]
+            }
+          ];
+
+          function renderFloorsBuilder() {
+            const container = modal.querySelector('#floors-builder-mount');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            floorsState.forEach((fl, fIndex) => {
+              const floorBox = document.createElement('div');
+              floorBox.style.background = 'var(--color-surface)';
+              floorBox.style.border = '1px solid var(--color-border)';
+              floorBox.style.padding = 'var(--space-4)';
+              floorBox.style.marginBottom = 'var(--space-3)';
+
+              // Floor header row
+              const fHeader = document.createElement('div');
+              fHeader.style.display = 'flex';
+              fHeader.style.justifyContent = 'space-between';
+              fHeader.style.alignItems = 'center';
+              fHeader.style.marginBottom = 'var(--space-3)';
+              fHeader.style.gap = 'var(--space-3)';
+
+              const fTitleWrap = document.createElement('div');
+              fTitleWrap.style.display = 'flex';
+              fTitleWrap.style.gap = 'var(--space-2)';
+              fTitleWrap.style.flex = '1';
+
+              fTitleWrap.innerHTML = `
+                <div style="flex: 2;">
+                  <label style="display:block; font-size: 11px; font-weight: 600; margin-bottom: 2px;">Floor Name *</label>
+                  <input type="text" class="form-input floor-name-input" data-floor-id="${fl.id}" value="${fl.name}" placeholder="e.g. Ground Floor, Level 1" style="width:100%; box-sizing:border-box; font-size:12px; padding:6px 8px;">
+                </div>
+                <div style="flex: 1;">
+                  <label style="display:block; font-size: 11px; font-weight: 600; margin-bottom: 2px;">Floor # *</label>
+                  <input type="number" class="form-input floor-number-input" data-floor-id="${fl.id}" value="${fl.floorNumber}" style="width:100%; box-sizing:border-box; font-size:12px; padding:6px 8px;">
+                </div>
+              `;
+
+              const removeFloorBtn = document.createElement('button');
+              removeFloorBtn.type = 'button';
+              removeFloorBtn.className = 'btn btn-secondary';
+              removeFloorBtn.style.fontSize = '11px';
+              removeFloorBtn.style.padding = '4px 8px';
+              removeFloorBtn.style.color = '#c00';
+              removeFloorBtn.textContent = 'Remove Floor';
+              if (floorsState.length <= 1) {
+                removeFloorBtn.style.display = 'none';
+              }
+              removeFloorBtn.onclick = () => {
+                floorsState = floorsState.filter(item => item.id !== fl.id);
+                renderFloorsBuilder();
+              };
+
+              fHeader.appendChild(fTitleWrap);
+              fHeader.appendChild(removeFloorBtn);
+              floorBox.appendChild(fHeader);
+
+              // Units list within this floor
+              const unitsWrap = document.createElement('div');
+              unitsWrap.style.paddingLeft = 'var(--space-3)';
+              unitsWrap.style.borderLeft = '2px solid var(--color-border)';
+
+              const unitsTitle = document.createElement('div');
+              unitsTitle.style.display = 'flex';
+              unitsTitle.style.justifyContent = 'space-between';
+              unitsTitle.style.alignItems = 'center';
+              unitsTitle.style.marginBottom = 'var(--space-2)';
+              unitsTitle.innerHTML = `
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-ink-muted);">Units & Vehicle Allocation in ${fl.name}</span>
+                <span style="font-size: 10px; color: var(--color-ink-muted);">Specify bays per vehicle</span>
+              `;
+              unitsWrap.appendChild(unitsTitle);
+
+              // Table Column Header
+              const uColHeader = document.createElement('div');
+              uColHeader.style.display = 'grid';
+              uColHeader.style.gridTemplateColumns = '60px 1fr 75px 75px 45px 28px';
+              uColHeader.style.gap = 'var(--space-2)';
+              uColHeader.style.marginBottom = '4px';
+              uColHeader.style.fontSize = '10px';
+              uColHeader.style.fontWeight = '600';
+              uColHeader.style.textTransform = 'uppercase';
+              uColHeader.style.color = 'var(--color-ink-muted)';
+              uColHeader.innerHTML = `
+                <span>Code</span>
+                <span>Unit Name</span>
+                <span title="Car & SUV Bays">Car Bays</span>
+                <span title="Motorcycle Bays">Bike Bays</span>
+                <span style="text-align:center;">Total</span>
+                <span></span>
+              `;
+              unitsWrap.appendChild(uColHeader);
+
+              fl.units.forEach((un) => {
+                const uRow = document.createElement('div');
+                uRow.style.display = 'grid';
+                uRow.style.gridTemplateColumns = '60px 1fr 75px 75px 45px 28px';
+                uRow.style.gap = 'var(--space-2)';
+                uRow.style.alignItems = 'center';
+                uRow.style.marginBottom = 'var(--space-2)';
+
+                const carB = un.carBays != null ? un.carBays : 8;
+                const motoB = un.motoBays != null ? un.motoBays : 2;
+                const totB = Number(carB) + Number(motoB);
+
+                uRow.innerHTML = `
+                  <div>
+                    <input type="text" class="form-input unit-code-input" data-floor-id="${fl.id}" data-unit-id="${un.id}" value="${un.code}" placeholder="Code" maxlength="4" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 6px; text-transform:uppercase;">
+                  </div>
+                  <div>
+                    <input type="text" class="form-input unit-name-input" data-floor-id="${fl.id}" data-unit-id="${un.id}" value="${un.name}" placeholder="Unit Name" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 6px;">
+                  </div>
+                  <div>
+                    <input type="number" class="form-input unit-car-input" data-floor-id="${fl.id}" data-unit-id="${un.id}" value="${carB}" min="0" max="100" placeholder="Car" title="Car Bays" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 6px;">
+                  </div>
+                  <div>
+                    <input type="number" class="form-input unit-moto-input" data-floor-id="${fl.id}" data-unit-id="${un.id}" value="${motoB}" min="0" max="100" placeholder="Bike" title="Motorcycle Bays" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 6px;">
+                  </div>
+                  <div class="unit-total-label" style="text-align:center; font-size:11px; font-weight:700; color:var(--color-ink);">
+                    ${totB}
+                  </div>
+                `;
+
+                // Update total on input change
+                const carInp = uRow.querySelector('.unit-car-input');
+                const motoInp = uRow.querySelector('.unit-moto-input');
+                const totLbl = uRow.querySelector('.unit-total-label');
+                const updateTot = () => {
+                  const c = Math.max(0, Number(carInp.value) || 0);
+                  const m = Math.max(0, Number(motoInp.value) || 0);
+                  totLbl.textContent = c + m;
+                };
+                carInp.addEventListener('input', updateTot);
+                motoInp.addEventListener('input', updateTot);
+
+                const removeUnitBtn = document.createElement('button');
+                removeUnitBtn.type = 'button';
+                removeUnitBtn.className = 'btn btn-secondary';
+                removeUnitBtn.style.padding = '4px';
+                removeUnitBtn.style.fontSize = '12px';
+                removeUnitBtn.style.lineHeight = '1';
+                removeUnitBtn.title = 'Remove Unit';
+                removeUnitBtn.textContent = '✕';
+                if (fl.units.length <= 1) {
+                  removeUnitBtn.style.visibility = 'hidden';
+                }
+                removeUnitBtn.onclick = () => {
+                  fl.units = fl.units.filter(item => item.id !== un.id);
+                  renderFloorsBuilder();
+                };
+
+                uRow.appendChild(removeUnitBtn);
+                unitsWrap.appendChild(uRow);
+              });
+
+              // Add unit to floor button
+              const addUnitBtn = document.createElement('button');
+              addUnitBtn.type = 'button';
+              addUnitBtn.className = 'btn btn-secondary';
+              addUnitBtn.style.fontSize = '11px';
+              addUnitBtn.style.padding = '4px 8px';
+              addUnitBtn.style.marginTop = 'var(--space-1)';
+              addUnitBtn.textContent = '+ Add Unit to this Floor';
+              addUnitBtn.onclick = () => {
+                syncCurrentInputs();
+                const nextCodeLetter = String.fromCharCode(65 + (fl.units.length % 26));
+                fl.units.push({
+                  id: nextUnitId++,
+                  name: `Unit ${nextCodeLetter}`,
+                  code: nextCodeLetter,
+                  carBays: 8,
+                  motoBays: 2,
+                  bays: 10
+                });
+                renderFloorsBuilder();
+              };
+
+              unitsWrap.appendChild(addUnitBtn);
+              floorBox.appendChild(unitsWrap);
+              container.appendChild(floorBox);
+            });
+          }
+
+          function syncCurrentInputs() {
+            floorsState.forEach(fl => {
+              const nameInput = modal.querySelector(`.floor-name-input[data-floor-id="${fl.id}"]`);
+              if (nameInput) fl.name = nameInput.value.trim();
+
+              const numInput = modal.querySelector(`.floor-number-input[data-floor-id="${fl.id}"]`);
+              if (numInput) fl.floorNumber = Number(numInput.value) || 1;
+
+              fl.units.forEach(un => {
+                const codeInput = modal.querySelector(`.unit-code-input[data-floor-id="${fl.id}"][data-unit-id="${un.id}"]`);
+                if (codeInput) un.code = (codeInput.value || 'A').toUpperCase().trim();
+
+                const uNameInput = modal.querySelector(`.unit-name-input[data-floor-id="${fl.id}"][data-unit-id="${un.id}"]`);
+                if (uNameInput) un.name = uNameInput.value.trim();
+
+                const carInput = modal.querySelector(`.unit-car-input[data-floor-id="${fl.id}"][data-unit-id="${un.id}"]`);
+                if (carInput) un.carBays = Math.max(0, Number(carInput.value) || 0);
+
+                const motoInput = modal.querySelector(`.unit-moto-input[data-floor-id="${fl.id}"][data-unit-id="${un.id}"]`);
+                if (motoInput) un.motoBays = Math.max(0, Number(motoInput.value) || 0);
+
+                un.bays = (un.carBays || 0) + (un.motoBays || 0);
+              });
+            });
+          }
+
+          modal.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
+              <div>
+                <h2 style="font-family: var(--font-heading); font-size: var(--text-xl); margin: 0 0 4px 0;">Add Commercial Facility</h2>
+                <p style="font-size: var(--text-xs); color: var(--color-ink-muted); margin: 0;">Configure facility credentials and multi-level floor/unit inventory.</p>
+              </div>
+              <button type="button" id="modal-top-close-btn" style="background:none; border:none; font-size: 20px; cursor:pointer; color: var(--color-ink-muted);">✕</button>
+            </div>
+            <div id="modal-error-notice" class="error-notice" style="display: none; margin-bottom: var(--space-3);"></div>
+            <form id="create-facility-form">
+              <!-- General Info -->
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Facility Name *</label>
+                <input type="text" name="name" placeholder="e.g. Uttara Commercial Parking" required class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Address Line *</label>
+                <input type="text" name="addressLine" placeholder="e.g. Sector 3, Road 7" required class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <div>
+                  <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Area *</label>
+                  <input type="text" name="area" placeholder="e.g. Uttara" required class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">City</label>
+                  <input type="text" name="city" value="Dhaka" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <!-- Floors & Units Section -->
+              <div style="border-top: 1px solid var(--color-border); padding-top: var(--space-4); margin-bottom: var(--space-4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                  <div>
+                    <h3 style="font-size: var(--text-sm); font-weight: 700; margin: 0 0 2px 0;">Floors & Units Layout Setup</h3>
+                    <p style="font-size: 11px; color: var(--color-ink-muted); margin: 0;">Add floors and multiple units per floor. Slots will be auto-provisioned.</p>
+                  </div>
+                  <button type="button" id="btn-add-floor" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;">+ Add Floor</button>
+                </div>
+
+                <div id="floors-builder-mount"></div>
+              </div>
+
+              <div style="margin-bottom: var(--space-4);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Description</label>
+                <textarea name="description" rows="2" class="form-input" style="width:100%; box-sizing:border-box;" placeholder="Multi-level secure commercial parking..."></textarea>
+              </div>
+
+              <div style="display:flex; justify-content: flex-end; gap: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-4);">
+                <button type="button" id="modal-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button type="submit" id="modal-submit-btn" class="btn btn-primary">Create Facility & Provisions</button>
+              </div>
+            </form>
+          `;
+
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+
+          renderFloorsBuilder();
+
+          modal.querySelector('#modal-top-close-btn').onclick = () => document.body.removeChild(overlay);
+          modal.querySelector('#modal-cancel-btn').onclick = () => document.body.removeChild(overlay);
+
+          modal.querySelector('#btn-add-floor').onclick = () => {
+            syncCurrentInputs();
+            const nextFloorNum = floorsState.length + 1;
+            floorsState.push({
+              id: nextFloorId++,
+              name: `Floor ${nextFloorNum}`,
+              floorNumber: nextFloorNum,
+              units: [
+                { id: nextUnitId++, name: 'Unit A', code: 'A', carBays: 8, motoBays: 2, bays: 10 }
+              ]
+            });
+            renderFloorsBuilder();
+          };
+
+          const errNotice = modal.querySelector('#modal-error-notice');
+          const submitBtn = modal.querySelector('#modal-submit-btn');
+
+          modal.querySelector('#create-facility-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            syncCurrentInputs();
+
+            errNotice.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating & Provisioning...';
+
+            const formData = new FormData(e.target);
+
+            const compiledFloors = floorsState.map(fl => ({
+              name: fl.name || `Floor ${fl.floorNumber}`,
+              floorNumber: Number(fl.floorNumber) || 1,
+              units: fl.units.map(un => ({
+                name: un.name || `Unit ${un.code}`,
+                code: (un.code || 'A').toUpperCase().trim(),
+                carBays: un.carBays != null ? Number(un.carBays) : 8,
+                motoBays: un.motoBays != null ? Number(un.motoBays) : 2,
+                bays: (Number(un.carBays) || 0) + (Number(un.motoBays) || 0)
+              }))
+            }));
+
+            const payload = {
+              name: formData.get('name'),
+              address: {
+                addressLine: formData.get('addressLine'),
+                area: formData.get('area'),
+                city: formData.get('city') || 'Dhaka'
+              },
+              floors: compiledFloors,
+              description: formData.get('description'),
+              facilities: ['CCTV Surveillance', '24/7 Security Guard']
+            };
+
+            try {
+              await apiRequest('/parking/locations', {
+                method: 'POST',
+                body: payload
+              });
+              if (typeof showToast === 'function') showToast('Facility and parking inventory created successfully', 'success');
+              document.body.removeChild(overlay);
+              await loadFacilities();
+            } catch (err) {
+              errNotice.textContent = err.message || 'Failed to create facility';
+              errNotice.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Create Facility & Provisions';
+            }
+          });
+        }
+
+        // ====================================================================
+        // EDIT FACILITY & LAYOUT MODAL (Edit details, add/manage floors & units)
+        // ====================================================================
+        async function showEditFacilityModal(loc) {
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.inset = '0';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.55)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '9999';
+          overlay.style.padding = 'var(--space-4)';
+
+          const modal = document.createElement('div');
+          modal.style.background = '#FFFFFF';
+          modal.style.border = '1px solid var(--color-border)';
+          modal.style.padding = 'var(--space-6)';
+          modal.style.width = '100%';
+          modal.style.maxWidth = '760px';
+          modal.style.maxHeight = '92vh';
+          modal.style.overflowY = 'auto';
+          modal.style.boxSizing = 'border-box';
+
+          modal.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); border-bottom:1px solid var(--color-border); padding-bottom:var(--space-3);">
+              <div>
+                <h2 style="font-family:var(--font-heading); font-size:var(--text-xl); margin:0;">Edit Facility &amp; Manage Layout</h2>
+                <p style="font-size:var(--text-xs); color:var(--color-ink-muted); margin:4px 0 0 0;">Update location settings and oversee live floor/unit inventory for <strong>${loc.name}</strong>.</p>
+              </div>
+              <button type="button" id="edit-modal-close" style="background:none; border:none; font-size:22px; cursor:pointer; color:var(--color-ink-muted);">✕</button>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-4); border-bottom:1px solid var(--color-border); padding-bottom:var(--space-2);">
+              <button type="button" id="tab-btn-info" class="btn btn-primary" style="font-size:12px; padding:6px 12px;">General Information</button>
+              <button type="button" id="tab-btn-layout" class="btn btn-secondary" style="font-size:12px; padding:6px 12px;">Floors &amp; Units Structure</button>
+            </div>
+
+            <div id="edit-notice" class="error-notice" style="display:none; margin-bottom:var(--space-3);"></div>
+
+            <!-- Panel 1: General Info -->
+            <div id="panel-facility-info">
+              <form id="edit-facility-info-form">
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:var(--space-3); margin-bottom:var(--space-3);">
+                  <div>
+                    <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">Facility Name *</label>
+                    <input type="text" name="name" value="${loc.name || ''}" required class="form-input" style="width:100%; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">Status *</label>
+                    <select name="status" class="form-input" style="width:100%; box-sizing:border-box;">
+                      <option value="ACTIVE" ${loc.status === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+                      <option value="MAINTENANCE" ${loc.status === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE</option>
+                      <option value="INACTIVE" ${loc.status === 'INACTIVE' ? 'selected' : ''}>INACTIVE</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:var(--space-3);">
+                  <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">Address Line *</label>
+                  <input type="text" name="addressLine" value="${(loc.address && loc.address.addressLine) || ''}" required class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-3); margin-bottom:var(--space-3);">
+                  <div>
+                    <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">Area *</label>
+                    <input type="text" name="area" value="${(loc.address && loc.address.area) || ''}" required class="form-input" style="width:100%; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">City</label>
+                    <input type="text" name="city" value="${(loc.address && loc.address.city) || 'Dhaka'}" class="form-input" style="width:100%; box-sizing:border-box;">
+                  </div>
+                </div>
+
+                <div style="margin-bottom:var(--space-4);">
+                  <label style="display:block; font-size:var(--text-xs); font-weight:600; margin-bottom:4px;">Description</label>
+                  <textarea name="description" rows="2" class="form-input" style="width:100%; box-sizing:border-box;">${loc.description || ''}</textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:var(--space-2);">
+                  <button type="submit" id="save-info-btn" class="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Panel 2: Layout Manager -->
+            <div id="panel-facility-layout" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+                <div>
+                  <h3 style="font-size:var(--text-sm); font-weight:700; margin:0;">Live Infrastructure Hierarchy</h3>
+                  <p style="font-size:11px; color:var(--color-ink-muted); margin:2px 0 0 0;">Add floors, add units, and manage active bays.</p>
+                </div>
+                <div style="display:flex; gap:var(--space-2);">
+                  <button type="button" id="toggle-add-floor-form-btn" class="btn btn-primary" style="font-size:11px; padding:4px 10px;">+ Add New Floor</button>
+                </div>
+              </div>
+
+              <!-- Inline Add Floor Form Box (hidden by default) -->
+              <div id="add-floor-form-box" style="display:none; background:var(--color-surface); border:1px solid var(--color-border); padding:var(--space-3); margin-bottom:var(--space-4);">
+                <h4 style="font-size:12px; margin:0 0 var(--space-2) 0; font-weight:700;">Add Floor to Facility</h4>
+                <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap:var(--space-2); align-items:end;">
+                  <div>
+                    <label style="display:block; font-size:11px; margin-bottom:2px;">Floor Name *</label>
+                    <input type="text" id="new-floor-name" placeholder="e.g. Floor 2" class="form-input" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 8px;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; margin-bottom:2px;">Floor # *</label>
+                    <input type="number" id="new-floor-num" placeholder="2" class="form-input" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px 8px;">
+                  </div>
+                  <div style="display:flex; gap:4px;">
+                    <button type="button" id="submit-new-floor-btn" class="btn btn-primary" style="font-size:11px; padding:6px 12px;">Create</button>
+                    <button type="button" id="cancel-new-floor-btn" class="btn btn-secondary" style="font-size:11px; padding:6px 8px;">Cancel</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floors Hierarchy Mount -->
+              <div id="layout-hierarchy-mount" style="min-height:120px;">
+                <div style="font-size:12px; color:var(--color-ink-muted);">Loading layout structure...</div>
+              </div>
+            </div>
+
+            <!-- Footer Close -->
+            <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--color-border); padding-top:var(--space-4); margin-top:var(--space-4);">
+              <button type="button" id="edit-modal-done-btn" class="btn btn-secondary">Done</button>
+            </div>
+          `;
+
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+
+          const closeSelf = () => {
+            document.body.removeChild(overlay);
+            loadFacilities();
+          };
+
+          modal.querySelector('#edit-modal-close').onclick = closeSelf;
+          modal.querySelector('#edit-modal-done-btn').onclick = closeSelf;
+
+          // Tab toggling
+          const tabBtnInfo = modal.querySelector('#tab-btn-info');
+          const tabBtnLayout = modal.querySelector('#tab-btn-layout');
+          const panelInfo = modal.querySelector('#panel-facility-info');
+          const panelLayout = modal.querySelector('#panel-facility-layout');
+
+          tabBtnInfo.onclick = () => {
+            tabBtnInfo.className = 'btn btn-primary';
+            tabBtnLayout.className = 'btn btn-secondary';
+            panelInfo.style.display = 'block';
+            panelLayout.style.display = 'none';
+          };
+
+          tabBtnLayout.onclick = () => {
+            tabBtnInfo.className = 'btn btn-secondary';
+            tabBtnLayout.className = 'btn btn-primary';
+            panelInfo.style.display = 'none';
+            panelLayout.style.display = 'block';
+            loadHierarchy();
+          };
+
+          // Save Info Form
+          const editNotice = modal.querySelector('#edit-notice');
+          modal.querySelector('#edit-facility-info-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            editNotice.style.display = 'none';
+            const saveBtn = modal.querySelector('#save-info-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            const formData = new FormData(e.target);
+            const payload = {
+              name: formData.get('name'),
+              status: formData.get('status'),
+              description: formData.get('description'),
+              address: {
+                addressLine: formData.get('addressLine'),
+                area: formData.get('area'),
+                city: formData.get('city') || 'Dhaka'
+              }
+            };
+
+            try {
+              await apiRequest(`/parking/locations/${loc._id}`, {
+                method: 'PUT',
+                body: payload
+              });
+              if (typeof showToast === 'function') showToast('Facility information updated', 'success');
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Changes';
+              loc.name = payload.name;
+            } catch (err) {
+              editNotice.textContent = err.message || 'Failed to update facility';
+              editNotice.style.display = 'block';
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Changes';
+            }
+          });
+
+          // Layout Manager Implementation
+          const mount = modal.querySelector('#layout-hierarchy-mount');
+          const addFloorBox = modal.querySelector('#add-floor-form-box');
+          const toggleAddFloorBtn = modal.querySelector('#toggle-add-floor-form-btn');
+          const cancelNewFloorBtn = modal.querySelector('#cancel-new-floor-btn');
+          const submitNewFloorBtn = modal.querySelector('#submit-new-floor-btn');
+
+          toggleAddFloorBtn.onclick = () => {
+            addFloorBox.style.display = addFloorBox.style.display === 'none' ? 'block' : 'none';
+          };
+          cancelNewFloorBtn.onclick = () => {
+            addFloorBox.style.display = 'none';
+          };
+
+          submitNewFloorBtn.onclick = async () => {
+            const fName = modal.querySelector('#new-floor-name').value.trim();
+            const fNum = Number(modal.querySelector('#new-floor-num').value);
+            if (!fName || isNaN(fNum)) {
+              alert('Please specify both floor name and a valid floor number.');
+              return;
+            }
+            submitNewFloorBtn.disabled = true;
+            try {
+              await apiRequest(`/parking/locations/${loc._id}/floors`, {
+                method: 'POST',
+                body: { name: fName, floorNumber: fNum }
+              });
+              if (typeof showToast === 'function') showToast(`Floor ${fName} created successfully`, 'success');
+              modal.querySelector('#new-floor-name').value = '';
+              modal.querySelector('#new-floor-num').value = '';
+              addFloorBox.style.display = 'none';
+              await loadHierarchy();
+            } catch (err) {
+              alert('Failed to add floor: ' + err.message);
+            } finally {
+              submitNewFloorBtn.disabled = false;
+            }
+          };
+
+          async function loadHierarchy() {
+            mount.innerHTML = '<div style="font-size:12px; color:var(--color-ink-muted);">Loading layout...</div>';
+            try {
+              const res = await apiRequest(`/parking/locations/${loc._id}/layout`);
+              const floors = res.floors || [];
+
+              if (floors.length === 0) {
+                mount.innerHTML = '<div style="padding:20px; background:var(--color-surface); text-align:center; font-size:12px; color:var(--color-ink-muted);">No floors created yet. Use "+ Add New Floor" above.</div>';
+                return;
+              }
+
+              mount.innerHTML = '';
+
+              floors.forEach(floor => {
+                const fCard = document.createElement('div');
+                fCard.style.background = '#FFFFFF';
+                fCard.style.border = '1px solid var(--color-border)';
+                fCard.style.padding = 'var(--space-3)';
+                fCard.style.marginBottom = 'var(--space-3)';
+
+                // Floor Title & Actions
+                const fHeader = document.createElement('div');
+                fHeader.style.display = 'flex';
+                fHeader.style.justifyContent = 'space-between';
+                fHeader.style.alignItems = 'center';
+                fHeader.style.marginBottom = 'var(--space-2)';
+                fHeader.style.borderBottom = '1px solid var(--color-border-subtle)';
+                fHeader.style.paddingBottom = 'var(--space-2)';
+
+                const titleGroup = document.createElement('div');
+                titleGroup.style.display = 'flex';
+                titleGroup.style.alignItems = 'center';
+                titleGroup.style.gap = '8px';
+
+                titleGroup.innerHTML = `
+                  <strong style="font-size:13px;">${floor.name}</strong>
+                  <span class="badge" style="font-size:10px; background:var(--color-surface);">Level ${floor.floorNumber}</span>
+                  <span style="font-size:11px; color:var(--color-ink-muted);">(${floor.units.length} Unit${floor.units.length === 1 ? '' : 's'})</span>
+                `;
+
+                const fActions = document.createElement('div');
+                fActions.style.display = 'flex';
+                fActions.style.gap = '6px';
+
+                // Add unit button
+                const addUnitToggleBtn = document.createElement('button');
+                addUnitToggleBtn.type = 'button';
+                addUnitToggleBtn.className = 'btn btn-secondary';
+                addUnitToggleBtn.style.fontSize = '11px';
+                addUnitToggleBtn.style.padding = '3px 8px';
+                addUnitToggleBtn.textContent = '+ Add Unit';
+
+                // Rename floor button
+                const renameFloorBtn = document.createElement('button');
+                renameFloorBtn.type = 'button';
+                renameFloorBtn.className = 'btn btn-secondary';
+                renameFloorBtn.style.fontSize = '11px';
+                renameFloorBtn.style.padding = '3px 8px';
+                renameFloorBtn.textContent = 'Rename';
+                renameFloorBtn.onclick = async () => {
+                  const updatedName = prompt('Enter new floor name:', floor.name);
+                  if (updatedName && updatedName.trim() && updatedName.trim() !== floor.name) {
+                    try {
+                      await apiRequest(`/parking/floors/${floor._id}`, {
+                        method: 'PUT',
+                        body: { name: updatedName.trim() }
+                      });
+                      if (typeof showToast === 'function') showToast('Floor renamed', 'success');
+                      await loadHierarchy();
+                    } catch (err) {
+                      alert('Failed to rename floor: ' + err.message);
+                    }
+                  }
+                };
+
+                // Deactivate floor
+                const deactFloorBtn = document.createElement('button');
+                deactFloorBtn.type = 'button';
+                deactFloorBtn.className = 'btn btn-secondary';
+                deactFloorBtn.style.fontSize = '11px';
+                deactFloorBtn.style.padding = '3px 8px';
+                deactFloorBtn.style.color = '#b33';
+                deactFloorBtn.textContent = 'Deactivate';
+                deactFloorBtn.onclick = async () => {
+                  if (confirm(`Are you sure you want to deactivate ${floor.name}?`)) {
+                    try {
+                      await apiRequest(`/parking/floors/${floor._id}`, { method: 'DELETE' });
+                      if (typeof showToast === 'function') showToast('Floor deactivated', 'success');
+                      await loadHierarchy();
+                    } catch (err) {
+                      alert('Failed to deactivate floor: ' + err.message);
+                    }
+                  }
+                };
+
+                fActions.appendChild(addUnitToggleBtn);
+                fActions.appendChild(renameFloorBtn);
+                fActions.appendChild(deactFloorBtn);
+
+                fHeader.appendChild(titleGroup);
+                fHeader.appendChild(fActions);
+                fCard.appendChild(fHeader);
+
+                // Add unit inline form (hidden by default)
+                const unitFormBox = document.createElement('div');
+                unitFormBox.style.display = 'none';
+                unitFormBox.style.background = 'var(--color-surface)';
+                unitFormBox.style.padding = 'var(--space-3)';
+                unitFormBox.style.marginBottom = 'var(--space-3)';
+                unitFormBox.style.border = '1px solid var(--color-border)';
+
+                unitFormBox.innerHTML = `
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+                    <span style="font-size:11px; font-weight:700;">Add Unit to ${floor.name}</span>
+                    <span style="font-size:10px; color:var(--color-ink-muted);">Specify bays per vehicle</span>
+                  </div>
+                  <div style="display:grid; grid-template-columns: 70px 1fr 75px 75px 40px auto auto; gap:6px; align-items:center;">
+                    <input type="text" placeholder="Code" class="form-input new-unit-code" maxlength="4" style="font-size:11px; padding:4px 6px; text-transform:uppercase;" title="Unit Code (e.g. B)">
+                    <input type="text" placeholder="Unit Name" class="form-input new-unit-name" style="font-size:11px; padding:4px 6px;" title="Unit Name">
+                    <input type="number" placeholder="Car" value="8" min="0" max="100" class="form-input new-unit-car" style="font-size:11px; padding:4px 6px;" title="Car & SUV Bays">
+                    <input type="number" placeholder="Bike" value="2" min="0" max="100" class="form-input new-unit-moto" style="font-size:11px; padding:4px 6px;" title="Motorcycle Bays">
+                    <span class="new-unit-total" style="font-size:11px; font-weight:700; text-align:center;">10</span>
+                    <button type="button" class="btn btn-primary btn-save-unit" style="font-size:11px; padding:4px 10px;">Add</button>
+                    <button type="button" class="btn btn-secondary btn-cancel-unit" style="font-size:11px; padding:4px 6px;">✕</button>
+                  </div>
+                `;
+
+                const carInput = unitFormBox.querySelector('.new-unit-car');
+                const motoInput = unitFormBox.querySelector('.new-unit-moto');
+                const totalSpan = unitFormBox.querySelector('.new-unit-total');
+                const updateInlineTotal = () => {
+                  const c = Math.max(0, Number(carInput.value) || 0);
+                  const m = Math.max(0, Number(motoInput.value) || 0);
+                  totalSpan.textContent = c + m;
+                };
+                carInput.addEventListener('input', updateInlineTotal);
+                motoInput.addEventListener('input', updateInlineTotal);
+
+                addUnitToggleBtn.onclick = () => {
+                  unitFormBox.style.display = unitFormBox.style.display === 'none' ? 'block' : 'none';
+                };
+                unitFormBox.querySelector('.btn-cancel-unit').onclick = () => {
+                  unitFormBox.style.display = 'none';
+                };
+
+                unitFormBox.querySelector('.btn-save-unit').onclick = async () => {
+                  const codeVal = unitFormBox.querySelector('.new-unit-code').value.trim();
+                  const nameVal = unitFormBox.querySelector('.new-unit-name').value.trim();
+                  const carBaysVal = Math.max(0, Number(carInput.value) || 0);
+                  const motoBaysVal = Math.max(0, Number(motoInput.value) || 0);
+                  const baysVal = carBaysVal + motoBaysVal;
+
+                  if (!codeVal) {
+                    alert('Please enter a unit code (e.g. A, B).');
+                    return;
+                  }
+                  if (baysVal <= 0) {
+                    alert('Please configure at least 1 bay (Car or Bike).');
+                    return;
+                  }
+
+                  try {
+                    await apiRequest(`/parking/floors/${floor._id}/units`, {
+                      method: 'POST',
+                      body: {
+                        code: codeVal,
+                        name: nameVal || `Unit ${codeVal.toUpperCase()}`,
+                        carBays: carBaysVal,
+                        motoBays: motoBaysVal,
+                        bays: baysVal
+                      }
+                    });
+                    if (typeof showToast === 'function') showToast(`Unit ${codeVal} created (${carBaysVal} Car • ${motoBaysVal} Bike)`, 'success');
+                    await loadHierarchy();
+                  } catch (err) {
+                    alert('Failed to add unit: ' + err.message);
+                  }
+                };
+
+                fCard.appendChild(unitFormBox);
+
+                // Units List Table / Rows
+                const unitsContainer = document.createElement('div');
+                unitsContainer.style.display = 'grid';
+                unitsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+                unitsContainer.style.gap = 'var(--space-2)';
+
+                if (floor.units.length === 0) {
+                  unitsContainer.innerHTML = '<span style="font-size:11px; color:#999;">No active units on this floor.</span>';
+                } else {
+                  floor.units.forEach(unit => {
+                    const uCard = document.createElement('div');
+                    uCard.style.border = '1px solid var(--color-border)';
+                    uCard.style.padding = '6px 10px';
+                    uCard.style.background = 'var(--color-surface)';
+                    uCard.style.display = 'flex';
+                    uCard.style.justifyContent = 'space-between';
+                    uCard.style.alignItems = 'center';
+
+                    uCard.innerHTML = `
+                      <div>
+                        <div style="font-size:12px; font-weight:700;">${unit.name} <span style="font-size:10px; color:var(--color-ink-muted);">[${unit.code}]</span></div>
+                        <div style="font-size:11px; margin-top:2px;">
+                          <strong>${unit.slotCount} Bays</strong>
+                          <span style="color:var(--color-ink-muted); margin:0 4px;">•</span>
+                          <span style="color:var(--color-accent); font-weight:600;">${unit.carCount || 0} Car</span>
+                          <span style="color:var(--color-ink-muted); margin:0 4px;">•</span>
+                          <span style="color:#0277bd; font-weight:600;">${unit.motoCount || 0} Bike</span>
+                        </div>
+                      </div>
+                    `;
+
+                    const delUnitBtn = document.createElement('button');
+                    delUnitBtn.type = 'button';
+                    delUnitBtn.style.background = 'none';
+                    delUnitBtn.style.border = 'none';
+                    delUnitBtn.style.color = '#c00';
+                    delUnitBtn.style.cursor = 'pointer';
+                    delUnitBtn.style.fontSize = '14px';
+                    delUnitBtn.title = 'Deactivate Unit';
+                    delUnitBtn.textContent = '✕';
+                    delUnitBtn.onclick = async () => {
+                      if (confirm(`Deactivate ${unit.name} [Code ${unit.code}]?`)) {
+                        try {
+                          await apiRequest(`/parking/units/${unit._id}`, { method: 'DELETE' });
+                          if (typeof showToast === 'function') showToast('Unit deactivated', 'success');
+                          await loadHierarchy();
+                        } catch (err) {
+                          alert('Failed to deactivate unit: ' + err.message);
+                        }
+                      }
+                    };
+
+                    uCard.appendChild(delUnitBtn);
+                    unitsContainer.appendChild(uCard);
+                  });
+                }
+
+                fCard.appendChild(unitsContainer);
+                mount.appendChild(fCard);
+              });
+
+            } catch (err) {
+              mount.innerHTML = `<div class="error-notice">Failed to load layout hierarchy: ${err.message}</div>`;
+            }
+          }
+        }
+
+        function showAssignManagerModal(loc) {
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.inset = '0';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '9999';
+
+          const modal = document.createElement('div');
+          modal.style.background = '#FFFFFF';
+          modal.style.border = '1px solid var(--color-border)';
+          modal.style.padding = 'var(--space-6)';
+          modal.style.width = '100%';
+          modal.style.maxWidth = '460px';
+          modal.style.boxSizing = 'border-box';
+
+          const assignedIds = (loc.managerIds || []).map(m => m._id || m);
+
+          modal.innerHTML = `
+            <h2 style="font-family: var(--font-heading); font-size: var(--text-xl); margin-bottom: var(--space-2);">Appoint Managers</h2>
+            <p style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: var(--space-4);">Select managers authorized to oversee <strong>${loc.name}</strong>.</p>
+            <form id="assign-mgr-form">
+              <div style="max-height: 240px; overflow-y: auto; border: 1px solid var(--color-border); padding: 10px; margin-bottom: var(--space-4);">
+                ${allManagers.length === 0 ? '<div style="font-size:12px; color:#888;">No users with MANAGER role available. Promote a user first.</div>' : allManagers.map(m => `
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" name="managers" value="${m._id}" ${assignedIds.some(id => id.toString() === m._id.toString()) ? 'checked' : ''}>
+                    <div>
+                      <strong>${m.name}</strong> (${m.email})
+                    </div>
+                  </label>
+                `).join('')}
+              </div>
+              <div style="display:flex; justify-content: flex-end; gap: var(--space-3);">
+                <button type="button" id="modal-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Assignments</button>
+              </div>
+            </form>
+          `;
+
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+
+          modal.querySelector('#modal-cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+          });
+
+          modal.querySelector('#assign-mgr-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const checked = Array.from(modal.querySelectorAll('input[name="managers"]:checked')).map(cb => cb.value);
+
+            try {
+              await apiRequest(`/admin/locations/${loc._id}/managers`, {
+                method: 'PUT',
+                body: { managerIds: checked }
+              });
+              if (typeof showToast === 'function') showToast('Manager assignments updated', 'success');
+              document.body.removeChild(overlay);
+              await loadFacilities();
+            } catch (err) {
+              alert('Failed to assign managers: ' + err.message);
+            }
+          });
+        }
+
+        // Initial Load
+        loadFacilities();
+
+      } catch (err) {
+        console.error('Admin Facilities Init Error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminFacilities);
+  </script>
+</body>
+</html>

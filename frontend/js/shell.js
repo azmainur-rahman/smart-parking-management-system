@@ -81,6 +81,12 @@ function renderShell(activeKey) {
   const brandSummary = document.createElement('div');
   brandSummary.className = 'sidebar-brand-summary';
 
+  const logoLink = document.createElement('a');
+  logoLink.href = `${siteRoot}index.html`;
+  logoLink.className = 'sidebar-brand-link';
+  logoLink.setAttribute('aria-label', 'Return to Smart Parking Home');
+  logoLink.innerHTML = `<img src="${siteRoot}images/smart-parking-logo.svg" alt="Smart Parking System" class="sidebar-logo-img">`;
+
   const portalLabel = document.createElement('span');
   portalLabel.className = 'sidebar-portal-label';
   portalLabel.textContent = 'Customer Portal';
@@ -89,6 +95,7 @@ function renderShell(activeKey) {
   userNameEl.className = 'sidebar-user-name';
   userNameEl.textContent = fullName;
 
+  brandSummary.appendChild(logoLink);
   brandSummary.appendChild(portalLabel);
   brandSummary.appendChild(userNameEl);
   sidebarTop.appendChild(brandSummary);
@@ -200,16 +207,20 @@ function renderShell(activeKey) {
   mobileTabBar.appendChild(mobileLogout);
 
   // --------------------------------------------------------------------------
-  // Main Content Landmark & app-content container
+  // Main Content Landmark & app-content container & Unified Footer
   // --------------------------------------------------------------------------
   const main = document.createElement('main');
   main.className = 'app-main';
   main.id = 'main-content';
+  main.style.display = 'flex';
+  main.style.flexDirection = 'column';
+  main.style.minHeight = '100vh';
 
   main.appendChild(mobileTabBar);
 
   const appContent = document.createElement('div');
   appContent.id = 'app-content';
+  appContent.style.flexGrow = '1';
   main.appendChild(appContent);
 
   shellRoot.appendChild(main);

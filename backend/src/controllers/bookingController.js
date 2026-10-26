@@ -151,7 +151,7 @@ export const quoteBooking = async (req, res) => {
     }
 
     const vehicleType = vehicle ? vehicle.vehicleType : 'CAR';
-    const pricing = calculatePrice({
+    const pricing = await calculatePrice({
       vehicleType,
       durationType: normDurationType,
       duration: numDuration
@@ -300,7 +300,7 @@ export const createBooking = async (req, res) => {
     }
 
     // 4. Server-side price calculation (never accept client-sent prices)
-    const pricing = calculatePrice({
+    const pricing = await calculatePrice({
       vehicleType: vehicle.vehicleType,
       durationType,
       duration,

@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Dashboard — Smart Parking</title>
-  <meta name="description" content="Manage your active parking reservations, registered vehicles, and parking passes.">
+  <title>Customer Dashboard — Smart Parking System</title>
+  <meta name="description" content="Manage your active parking reservations, registered vehicles, and digital parking passes with real-time IoT bay telemetry.">
   <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
 
   <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Core Stylesheets -->
   <link rel="stylesheet" href="../../css/global.css">
@@ -34,132 +38,330 @@
         if (!appContent) return;
 
         const user = getUser();
-        const firstName = user && user.name ? user.name.trim().split(' ')[0] : 'Customer';
+        const firstName = user && user.name ? user.name.trim().split(' ')[0] : 'Driver';
         const siteRoot = window.SITE_ROOT || '../../';
 
-        // Page Header
-        const header = document.createElement('header');
-        header.className = 'app-page-header';
+        // 1. SMART PARKING HERO COMMAND CENTER BANNER
+        const heroBanner = document.createElement('div');
+        heroBanner.className = 'sp-hero-banner';
+        heroBanner.innerHTML = `
+          <div class="sp-hero-grid">
+            <div>
+              <div class="sp-hero-header">
+                <div class="sp-hero-brand-wrap">
+                  <div style="width: 44px; height: 44px; border-radius: var(--radius); background: #222933; border: 1px solid #364152; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E27344" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                      <path d="M7 15V9h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H7"></path>
+                      <path d="M15 11a3 3 0 0 1 3 3"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 class="sp-hero-title">Smart Parking Command Center</h1>
+                    <div style="font-size: 0.8125rem; color: #94A3B8; margin-top: 2px;">
+                      Welcome back, <strong style="color: #FFFFFF;">${firstName}</strong> • IoT Automated Bay System
+                    </div>
+                  </div>
+                </div>
+                <div class="sp-telemetry-badge" title="Live connection to smart barrier sensors and occupancy nodes">
+                  <span class="sp-telemetry-dot"></span>
+                  <span>Live IoT Sensors Online</span>
+                </div>
+              </div>
+              <p class="sp-hero-subtitle">
+                Real-time bay occupancy telemetry, digital QR gate access, and instant slot reservations across commercial facilities.
+              </p>
+              <div class="sp-quick-actions">
+                <a href="${siteRoot}pages/parking.html" class="sp-action-btn sp-action-btn-primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m10 8 4 4-4 4"></path></svg>
+                  Find &amp; Reserve Bay
+                </a>
+                <a href="${siteRoot}pages/customer/vehicles.html" class="sp-action-btn sp-action-btn-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+                  Manage Vehicles
+                </a>
+                <a href="${siteRoot}pages/customer/bookings.html" class="sp-action-btn sp-action-btn-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  Gate Passes &amp; History
+                </a>
+              </div>
+            </div>
+            <div class="sp-hero-media">
+              <img src="${siteRoot}images/hero-parking-smart.jpg" alt="Commercial Smart Parking Facility with Sensor Guidance" class="sp-hero-img">
+              <div class="sp-hero-img-badge">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #22C55E; display: inline-block;"></span>
+                <span>Active Facility Telemetry</span>
+              </div>
+            </div>
+          </div>
+        `;
+        appContent.appendChild(heroBanner);
 
-        const titleWrap = document.createElement('div');
-        const eyebrow = document.createElement('p');
-        eyebrow.className = 'app-page-eyebrow';
-        eyebrow.textContent = 'Account Overview';
+        // Active Session Container (renders only if an active/upcoming session is found)
+        const activeSessionMount = document.createElement('div');
+        activeSessionMount.id = 'active-session-mount';
+        appContent.appendChild(activeSessionMount);
 
-        const title = document.createElement('h1');
-        title.className = 'app-page-title';
-        title.textContent = `Welcome, ${firstName}`;
-
-        const desc = document.createElement('p');
-        desc.className = 'app-page-desc';
-        desc.textContent = 'Monitor your upcoming bookings, vehicle records, and digital passes.';
-
-        titleWrap.appendChild(eyebrow);
-        titleWrap.appendChild(title);
-        titleWrap.appendChild(desc);
-        header.appendChild(titleWrap);
-
-        const findParkingBtn = document.createElement('a');
-        findParkingBtn.className = 'btn-primary';
-        findParkingBtn.href = `${siteRoot}index.html#parking-locations`;
-        findParkingBtn.textContent = 'Find Parking';
-        header.appendChild(findParkingBtn);
-
-        appContent.appendChild(header);
-
-        // Section 1: Stat Blocks
+        // Section 1: KPI Stat Blocks Grid
         const statContainer = document.createElement('div');
         statContainer.className = 'stat-grid';
-        statContainer.appendChild(loadingSkeleton(3, 'card'));
+        if (typeof loadingSkeleton === 'function') {
+          statContainer.appendChild(loadingSkeleton(4, 'card'));
+        }
         appContent.appendChild(statContainer);
 
-        // Section 2: Upcoming Bookings
+        // Section 2: Live Nearby Facilities & Open Bays Showcase
+        const facilitiesSection = document.createElement('section');
+        facilitiesSection.className = 'sp-facilities-section';
+        facilitiesSection.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+              <h2 class="section-title" style="margin-bottom: 2px;">Live Parking Facilities &amp; Capacity</h2>
+              <p style="font-size: 0.875rem; color: var(--color-muted); margin: 0;">Automated commercial smart facilities with real-time bay occupancy.</p>
+            </div>
+            <a href="${siteRoot}pages/parking.html" style="font-size: 0.8125rem; font-weight: 600; color: var(--color-accent); text-decoration: none;">View All Facilities →</a>
+          </div>
+          <div id="sp-facilities-mount" class="sp-facilities-grid">
+            ${typeof loadingSkeleton === 'function' ? loadingSkeleton(3, 'card').outerHTML : ''}
+          </div>
+        `;
+        appContent.appendChild(facilitiesSection);
+
+        // Section 3: Upcoming Reservations
         const bookingsSection = document.createElement('section');
         bookingsSection.className = 'content-section';
         bookingsSection.setAttribute('aria-labelledby', 'upcoming-bookings-title');
 
+        const sectionHead = document.createElement('div');
+        sectionHead.style.display = 'flex';
+        sectionHead.style.justifyContent = 'space-between';
+        sectionHead.style.alignItems = 'flex-end';
+        sectionHead.style.marginBottom = 'var(--space-4)';
+        sectionHead.style.flexWrap = 'wrap';
+        sectionHead.style.gap = 'var(--space-2)';
+
         const sectionTitle = document.createElement('h2');
         sectionTitle.className = 'section-title';
         sectionTitle.id = 'upcoming-bookings-title';
-        sectionTitle.textContent = 'Upcoming Bookings';
-        bookingsSection.appendChild(sectionTitle);
+        sectionTitle.style.marginBottom = '0';
+        sectionTitle.textContent = 'My Scheduled Bookings';
+
+        const viewAllBookings = document.createElement('a');
+        viewAllBookings.href = 'bookings.html';
+        viewAllBookings.style.fontSize = '0.8125rem';
+        viewAllBookings.style.fontWeight = '600';
+        viewAllBookings.style.color = 'var(--color-accent)';
+        viewAllBookings.style.textDecoration = 'none';
+        viewAllBookings.textContent = 'View Complete Ledger →';
+
+        sectionHead.appendChild(sectionTitle);
+        sectionHead.appendChild(viewAllBookings);
+        bookingsSection.appendChild(sectionHead);
 
         const listContainer = document.createElement('div');
         listContainer.id = 'upcoming-bookings-list';
-        listContainer.appendChild(loadingSkeleton(3, 'card'));
+        if (typeof loadingSkeleton === 'function') {
+          listContainer.appendChild(loadingSkeleton(2, 'card'));
+        }
         bookingsSection.appendChild(listContainer);
-
         appContent.appendChild(bookingsSection);
 
-        // Load Data
+        // ====================================================================
+        // DATA LOADING ENGINE
+        // ====================================================================
         async function loadDashboardData() {
           try {
-            // 1. Fetch Summary Stats
-            const summaryRes = await apiRequest('/dashboard/summary');
-            const summary = summaryRes.summary || { upcoming: 0, completed: 0, vehicles: 0 };
+            // 1. Fetch Summary Stats & Bookings in parallel
+            const [summaryRes, bookingsRes, locationsRes] = await Promise.all([
+              apiRequest('/dashboard/summary').catch(() => ({ summary: {} })),
+              apiRequest('/bookings').catch(() => ({ bookings: [] })),
+              apiRequest('/public/locations').catch(() => ({ locations: [] }))
+            ]);
 
+            const summary = summaryRes.summary || { upcoming: 0, completed: 0, vehicles: 0 };
+            const allBookings = bookingsRes.bookings || [];
+            const locations = locationsRes.locations || [];
+
+            // Calculate total open bays across city
+            const totalAvailableBays = locations.reduce((acc, loc) => acc + (loc.availableSlots || 0), 0);
+
+            // RENDER STAT CARDS
             statContainer.innerHTML = '';
-            const stats = [
-              { label: 'Upcoming Reservations', value: summary.upcoming || 0 },
-              { label: 'Completed Sessions', value: summary.completed || 0 },
-              { label: 'Registered Vehicles', value: summary.vehicles || 0 }
+            const statItems = [
+              {
+                label: 'Upcoming Reservations',
+                value: summary.upcoming || 0,
+                subtext: 'Guaranteed reserved bays',
+                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+              },
+              {
+                label: 'Completed Sessions',
+                value: summary.completed || 0,
+                subtext: 'Archived parking history',
+                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
+              },
+              {
+                label: 'Registered Vehicles',
+                value: summary.vehicles || 0,
+                subtext: 'Active gate credentials',
+                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>`
+              },
+              {
+                label: 'City Open Bays',
+                value: totalAvailableBays,
+                subtext: 'Real-time telemetry across Dhaka',
+                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>`
+              }
             ];
 
-            stats.forEach((item) => {
+            statItems.forEach((st, idx) => {
               const card = document.createElement('div');
               card.className = 'stat-card';
-
-              const l = document.createElement('div');
-              l.className = 'stat-label';
-              l.textContent = item.label;
-
-              const v = document.createElement('div');
-              v.className = 'stat-value';
-              v.textContent = String(item.value);
-
-              card.appendChild(l);
-              card.appendChild(v);
+              card.style.animationDelay = `${idx * 0.08}s`;
+              card.innerHTML = `
+                <div class="stat-card-header">
+                  <div class="stat-label">${st.label}</div>
+                  <div class="stat-icon-wrap">${st.icon}</div>
+                </div>
+                <div class="stat-value">${st.value}</div>
+                <div class="stat-subtext">${st.subtext}</div>
+              `;
               statContainer.appendChild(card);
             });
 
-            // 2. Fetch User Bookings
-            const bookingsRes = await apiRequest('/bookings');
-            const allBookings = bookingsRes.bookings || [];
+            // 2. ACTIVE SESSION / PARKING MONITOR CARD
             const now = new Date();
-
-            // Client-side filter: CONFIRMED or ACTIVE with future endTime
             const upcomingBookings = allBookings
               .filter((b) => ['CONFIRMED', 'ACTIVE'].includes(b.bookingStatus) && new Date(b.endTime) >= now)
-              .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-              .slice(0, 5);
+              .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
+            activeSessionMount.innerHTML = '';
+            if (upcomingBookings.length > 0) {
+              const activeBooking = upcomingBookings[0];
+              const isParkedNow = new Date(activeBooking.startTime) <= now && new Date(activeBooking.endTime) >= now;
+              const slotNum = activeBooking.slotId && activeBooking.slotId.slotNumber ? activeBooking.slotId.slotNumber : 'Reserved';
+              const vehText = activeBooking.vehicleId ? `${activeBooking.vehicleId.brand || ''} ${activeBooking.vehicleId.model || ''} (${activeBooking.vehicleId.registrationNumber || ''})` : 'Vehicle Not Assigned';
+              const locName = activeBooking.locationId ? activeBooking.locationId.name : 'Commercial Parking Facility';
+              const vehType = (activeBooking.vehicleId && activeBooking.vehicleId.vehicleType) ? activeBooking.vehicleId.vehicleType : 'CAR';
+
+              const activeCard = document.createElement('div');
+              activeCard.className = 'sp-active-pass-card';
+              activeCard.innerHTML = `
+                <div class="sp-pass-top">
+                  <div class="sp-pass-pill">
+                    <span class="sp-telemetry-dot"></span>
+                    <span>${isParkedNow ? '● Vehicle Parked Right Now' : 'Scheduled Upcoming Session'}</span>
+                  </div>
+                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--color-ink-muted);">Booking #${activeBooking.bookingNumber}</span>
+                </div>
+                <div class="sp-pass-grid">
+                  <div class="sp-bay-badge">
+                    <span class="sp-bay-label">Assigned Bay</span>
+                    <span class="sp-bay-number">${slotNum}</span>
+                    <span style="font-size: 9px; font-weight: 700; color: #E27344; margin-top: 3px; letter-spacing: 0.05em;">${vehType} BAY</span>
+                  </div>
+                  <div class="sp-pass-details">
+                    <div class="sp-pass-facility">${locName}</div>
+                    <div class="sp-pass-vehicle">🚗 ${vehText}</div>
+                    <div class="sp-pass-time">⏱ ${formatDate(activeBooking.startTime)}, ${formatTime(activeBooking.startTime)} – ${formatTime(activeBooking.endTime)}</div>
+                  </div>
+                  <div>
+                    <a href="../booking-slip.html?id=${activeBooking._id}" class="sp-action-btn sp-action-btn-primary" style="font-size: 13px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                      View Gate QR Pass
+                    </a>
+                  </div>
+                </div>
+              `;
+              activeSessionMount.appendChild(activeCard);
+            }
+
+            // 3. RENDER NEARBY SMART FACILITIES SHOWCASE
+            const facilitiesMount = document.getElementById('sp-facilities-mount');
+            if (facilitiesMount) {
+              facilitiesMount.innerHTML = '';
+              if (locations.length === 0) {
+                facilitiesMount.innerHTML = '<p style="color: var(--color-muted); font-size: 0.875rem;">No commercial facilities found.</p>';
+              } else {
+                locations.slice(0, 3).forEach((loc, fIdx) => {
+                  const fCard = document.createElement('div');
+                  fCard.className = 'sp-facility-card';
+                  fCard.style.animationDelay = `${fIdx * 0.1}s`;
+
+                  const openBays = loc.availableSlots != null ? loc.availableSlots : 0;
+                  const rate = loc.hourlyRate != null ? `৳${loc.hourlyRate}/hr` : '৳50/hr';
+                  const area = (loc.address && loc.address.area) ? `${loc.address.area}, ${loc.address.city || 'Dhaka'}` : 'Dhaka';
+
+                  fCard.innerHTML = `
+                    <div>
+                      <div class="sp-facility-top">
+                        <h3 class="sp-facility-title">${loc.name}</h3>
+                        <span class="sp-open-badge">
+                          <span style="width: 6px; height: 6px; border-radius: 50%; background: #16A34A;"></span>
+                          ${openBays} Bays Open
+                        </span>
+                      </div>
+                      <div class="sp-facility-area">📍 ${area}</div>
+                      <div style="font-size: 11px; color: var(--color-ink-muted); margin-top: 6px;">
+                        Supported: Car • Motorcycle • SUV
+                      </div>
+                    </div>
+                    <div class="sp-facility-footer">
+                      <div class="sp-facility-rate">${rate}</div>
+                      <a href="${siteRoot}pages/parking-details.html?id=${loc._id}" class="sp-facility-btn">
+                        Reserve Bay →
+                      </a>
+                    </div>
+                  `;
+                  facilitiesMount.appendChild(fCard);
+                });
+              }
+            }
+
+            // 4. RENDER UPCOMING BOOKINGS LIST
             listContainer.innerHTML = '';
-
             if (upcomingBookings.length === 0) {
               const empty = emptyState(
                 'No Upcoming Reservations',
                 'You have no scheduled parking sessions at this time. Book ahead to guarantee your parking bay.',
-                'Search Parking Spaces',
-                `${siteRoot}index.html#parking-locations`
+                'Find & Reserve Parking',
+                `${siteRoot}pages/parking.html`
               );
               listContainer.appendChild(empty);
             } else {
-              upcomingBookings.forEach((b) => {
+              upcomingBookings.slice(0, 5).forEach((b) => {
                 const row = document.createElement('article');
                 row.className = 'booking-row';
 
                 const mainInfo = document.createElement('div');
                 mainInfo.className = 'booking-main-info';
 
-                const bNum = document.createElement('span');
-                bNum.className = 'booking-number';
-                bNum.textContent = b.bookingNumber;
+                const bNum = document.createElement('div');
+                bNum.style.display = 'flex';
+                bNum.style.alignItems = 'center';
+                bNum.style.gap = '8px';
+
+                const numSpan = document.createElement('span');
+                numSpan.className = 'booking-number';
+                numSpan.textContent = `#${b.bookingNumber}`;
+
+                const bayPill = document.createElement('span');
+                bayPill.style.fontSize = '11px';
+                bayPill.style.fontWeight = '700';
+                bayPill.style.padding = '1px 6px';
+                bayPill.style.borderRadius = '3px';
+                bayPill.style.background = '#181E26';
+                bayPill.style.color = '#38BDF8';
+                bayPill.textContent = b.slotId && b.slotId.slotNumber ? `Bay ${b.slotId.slotNumber}` : 'Bay Assigned';
+
+                bNum.appendChild(numSpan);
+                bNum.appendChild(bayPill);
 
                 const locText = document.createElement('span');
                 locText.className = 'booking-location';
-                const locName = b.locationId && b.locationId.name ? b.locationId.name : 'Parking Facility';
-                const slotName = b.slotId && b.slotId.slotNumber ? ` • Slot ${b.slotId.slotNumber}` : '';
-                locText.textContent = `${locName}${slotName}`;
+                const locName = b.locationId && b.locationId.name ? b.locationId.name : 'Commercial Parking Facility';
+                const vehDetail = b.vehicleId ? ` • ${b.vehicleId.brand || ''} ${b.vehicleId.model || ''} (${b.vehicleId.registrationNumber || ''})` : '';
+                locText.textContent = `${locName}${vehDetail}`;
 
                 mainInfo.appendChild(bNum);
                 mainInfo.appendChild(locText);
@@ -180,15 +382,15 @@
                   const slipLink = document.createElement('a');
                   slipLink.href = `../booking-slip.html?id=${b._id}`;
                   slipLink.className = 'btn-row-action';
-                  slipLink.style.padding = '2px 10px';
+                  slipLink.style.padding = '4px 12px';
                   slipLink.style.minHeight = '36px';
-                  slipLink.textContent = 'View Slip';
+                  slipLink.style.fontWeight = '600';
+                  slipLink.textContent = 'View Gate Pass';
                   metaInfo.appendChild(slipLink);
                 }
 
                 row.appendChild(mainInfo);
                 row.appendChild(metaInfo);
-
                 listContainer.appendChild(row);
               });
             }
@@ -199,31 +401,18 @@
 
             const errorWrap = document.createElement('div');
             errorWrap.className = 'empty-state';
-
-            const errTitle = document.createElement('h3');
-            errTitle.className = 'empty-state-title';
-            errTitle.textContent = 'Unable to Load Dashboard Data';
-
-            const errMsg = document.createElement('p');
-            errMsg.className = 'empty-state-text';
-            errMsg.textContent = err.message || 'An error occurred while communicating with the parking service.';
-
+            errorWrap.innerHTML = `
+              <h3 class="empty-state-title">Unable to Load Dashboard Data</h3>
+              <p class="empty-state-text">${err.message || 'An error occurred while communicating with the parking service.'}</p>
+            `;
             const retryBtn = document.createElement('button');
             retryBtn.type = 'button';
             retryBtn.className = 'btn-primary';
             retryBtn.textContent = 'Retry';
             retryBtn.addEventListener('click', () => {
-              statContainer.innerHTML = '';
-              statContainer.appendChild(loadingSkeleton(3, 'card'));
-              listContainer.innerHTML = '';
-              listContainer.appendChild(loadingSkeleton(3, 'card'));
               loadDashboardData();
             });
-
-            errorWrap.appendChild(errTitle);
-            errorWrap.appendChild(errMsg);
             errorWrap.appendChild(retryBtn);
-
             listContainer.appendChild(errorWrap);
           }
         }
@@ -231,39 +420,6 @@
         await loadDashboardData();
       } catch (err) {
         console.error('Dashboard initialization error:', err);
-        const mount = document.getElementById('app-content') || document.body;
-        mount.innerHTML = '';
-
-        const errorWrap = document.createElement('div');
-        errorWrap.className = 'container';
-        errorWrap.style.padding = 'var(--space-8) var(--space-4)';
-
-        const card = document.createElement('div');
-        card.className = 'empty-state';
-        card.style.maxWidth = '600px';
-        card.style.margin = '0 auto';
-
-        const errTitle = document.createElement('h2');
-        errTitle.className = 'empty-state-title';
-        errTitle.textContent = 'Unable to Load Dashboard';
-
-        const errMsg = document.createElement('p');
-        errMsg.className = 'empty-state-text';
-        errMsg.textContent = err.message || 'An unexpected error occurred while initializing the dashboard.';
-
-        const retryBtn = document.createElement('button');
-        retryBtn.type = 'button';
-        retryBtn.className = 'btn-primary';
-        retryBtn.textContent = 'Retry';
-        retryBtn.addEventListener('click', () => {
-          window.location.reload();
-        });
-
-        card.appendChild(errTitle);
-        card.appendChild(errMsg);
-        card.appendChild(retryBtn);
-        errorWrap.appendChild(card);
-        mount.appendChild(errorWrap);
       }
     }
 

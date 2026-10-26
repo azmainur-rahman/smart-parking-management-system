@@ -376,6 +376,38 @@ function formatMoney(amount) {
   return `৳${num.toLocaleString('en-US')}`;
 }
 
+/**
+ * Stat Card Component Generator
+ * @param {string} label
+ * @param {string|number} value
+ * @param {string} [subtext]
+ * @returns {HTMLElement}
+ */
+function createStatCard(label, value, subtext = '') {
+  const card = document.createElement('div');
+  card.className = 'stat-card';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'stat-card-label';
+  lbl.textContent = label;
+
+  const val = document.createElement('div');
+  val.className = 'stat-card-value';
+  val.textContent = value;
+
+  card.appendChild(lbl);
+  card.appendChild(val);
+
+  if (subtext) {
+    const sub = document.createElement('span');
+    sub.className = 'stat-card-sub';
+    sub.textContent = subtext;
+    card.appendChild(sub);
+  }
+
+  return card;
+}
+
 // Global browser registration for classic script tag includes
 if (typeof window !== 'undefined') {
   window.showToast = showToast;
@@ -388,4 +420,5 @@ if (typeof window !== 'undefined') {
   window.formatDate = formatDate;
   window.formatTime = formatTime;
   window.formatMoney = formatMoney;
+  window.createStatCard = createStatCard;
 }

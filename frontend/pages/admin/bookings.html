@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Bookings — Smart Parking Admin</title>
+  <meta name="description" content="Centralized booking audit across all commercial facilities.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
+  <!-- Google Fonts: Fraunces & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/admin-shell.js"></script>
+
+  <script>
+    async function initAdminBookings() {
+      try {
+        const appContent = renderAdminShell('bookings');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Reservation Audit';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Global Reservations';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Live ledger of all provisional holds, active occupancies, completed parking stays, and cancellations.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'admin-bookings-container';
+        appContent.appendChild(container);
+
+        // Filter Bar
+        const topBar = document.createElement('div');
+        topBar.style.display = 'flex';
+        topBar.style.flexWrap = 'wrap';
+        topBar.style.gap = 'var(--space-3)';
+        topBar.style.marginBottom = 'var(--space-4)';
+        topBar.style.alignItems = 'center';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search booking number (e.g. SP-)...';
+        searchInput.className = 'form-input';
+        searchInput.style.width = '260px';
+
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'form-select';
+        statusSelect.innerHTML = `
+          <option value="">All Statuses</option>
+          <option value="CONFIRMED">CONFIRMED</option>
+          <option value="ACTIVE">ACTIVE (In Bay)</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
+          <option value="CANCELLED">CANCELLED</option>
+        `;
+
+        const filterBtn = document.createElement('button');
+        filterBtn.type = 'button';
+        filterBtn.className = 'btn btn-secondary';
+        filterBtn.textContent = 'Search';
+        filterBtn.addEventListener('click', () => fetchBookings(1));
+
+        topBar.appendChild(searchInput);
+        topBar.appendChild(statusSelect);
+        topBar.appendChild(filterBtn);
+        container.appendChild(topBar);
+
+        const tableContainer = document.createElement('div');
+        container.appendChild(tableContainer);
+
+        async function fetchBookings(page = 1) {
+          tableContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-ink-muted);">Loading reservations...</div>';
+
+          const query = searchInput.value.trim();
+          const status = statusSelect.value;
+
+          let url = `/admin/bookings?page=${page}&limit=20`;
+          if (query) url += `&q=${encodeURIComponent(query)}`;
+          if (status) url += `&status=${encodeURIComponent(status)}`;
+
+          try {
+            const res = await apiRequest(url);
+            renderBookingsTable(res.bookings || [], res.pagination || {});
+          } catch (err) {
+            tableContainer.innerHTML = `<div class="error-notice">Failed to load bookings: ${err.message}</div>`;
+          }
+        }
+
+        function renderBookingsTable(bookings, pagination) {
+          if (bookings.length === 0) {
+            tableContainer.innerHTML = '<div style="padding: 40px; background: #fff; border: 1px solid var(--color-border); text-align: center; color: var(--color-ink-muted);">No reservations found matching criteria.</div>';
+            return;
+          }
+
+          const wrap = document.createElement('div');
+          wrap.style.overflowX = 'auto';
+          wrap.style.background = '#FFFFFF';
+          wrap.style.border = '1px solid var(--color-border)';
+
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.fontSize = 'var(--text-xs)';
+
+          table.innerHTML = `
+            <thead>
+              <tr style="border-bottom: 1px solid var(--color-border); text-align: left; background: var(--color-surface);">
+                <th style="padding: 10px 14px;">Booking #</th>
+                <th style="padding: 10px 14px;">Customer</th>
+                <th style="padding: 10px 14px;">Facility & Slot</th>
+                <th style="padding: 10px 14px;">Timing</th>
+                <th style="padding: 10px 14px;">Amount</th>
+                <th style="padding: 10px 14px;">Booking Status</th>
+                <th style="padding: 10px 14px;">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookings.map(b => `
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                  <td style="padding: 10px 14px; font-weight: 600;">
+                    <a href="../booking-slip.html?id=${b._id}" style="color: var(--color-accent); text-decoration:none;">${b.bookingNumber}</a>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <div>${b.userId ? b.userId.name : 'Unknown'}</div>
+                    <div style="color: var(--color-ink-muted); font-size:11px;">${b.userId ? b.userId.email : ''}</div>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <div>${b.locationId ? b.locationId.name : '-'}</div>
+                    <div style="font-weight: 600; color: var(--color-ink); font-size:11px;">Slot: ${b.slotId ? b.slotId.slotNumber : '-'}</div>
+                  </td>
+                  <td style="padding: 10px 14px; font-size:11px;">
+                    <div>In: ${new Date(b.startTime).toLocaleString()}</div>
+                    <div>Out: ${new Date(b.endTime).toLocaleString()}</div>
+                  </td>
+                  <td style="padding: 10px 14px; font-weight: 600;">৳${b.totalAmount || 0}</td>
+                  <td style="padding: 10px 14px;">
+                    <span class="badge ${b.bookingStatus === 'CONFIRMED' || b.bookingStatus === 'COMPLETED' ? 'badge-success' : (b.bookingStatus === 'ACTIVE' ? 'badge-info' : 'badge-warning')}">${b.bookingStatus}</span>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <span class="badge ${b.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}">${b.paymentStatus}</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+
+          wrap.appendChild(table);
+          tableContainer.innerHTML = '';
+          tableContainer.appendChild(wrap);
+
+          // Pagination
+          if (pagination.totalPages > 1) {
+            const pageDiv = document.createElement('div');
+            pageDiv.style.display = 'flex';
+            pageDiv.style.justifyContent = 'space-between';
+            pageDiv.style.alignItems = 'center';
+            pageDiv.style.marginTop = 'var(--space-4)';
+
+            const pageInfo = document.createElement('span');
+            pageInfo.style.fontSize = 'var(--text-xs)';
+            pageInfo.style.color = 'var(--color-ink-muted)';
+            pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} total bookings)`;
+
+            const btnWrap = document.createElement('div');
+            btnWrap.style.display = 'flex';
+            btnWrap.style.gap = 'var(--space-2)';
+
+            if (pagination.page > 1) {
+              const prev = document.createElement('button');
+              prev.className = 'btn btn-secondary';
+              prev.style.padding = '4px 10px';
+              prev.textContent = '← Prev';
+              prev.onclick = () => fetchBookings(pagination.page - 1);
+              btnWrap.appendChild(prev);
+            }
+
+            if (pagination.page < pagination.totalPages) {
+              const next = document.createElement('button');
+              next.className = 'btn btn-secondary';
+              next.style.padding = '4px 10px';
+              next.textContent = 'Next →';
+              next.onclick = () => fetchBookings(pagination.page + 1);
+              btnWrap.appendChild(next);
+            }
+
+            pageDiv.appendChild(pageInfo);
+            pageDiv.appendChild(btnWrap);
+            tableContainer.appendChild(pageDiv);
+          }
+        }
+
+        // Initial Load
+        fetchBookings(1);
+
+      } catch (err) {
+        console.error('Admin Bookings Init Error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminBookings);
+  </script>
+</body>
+</html>

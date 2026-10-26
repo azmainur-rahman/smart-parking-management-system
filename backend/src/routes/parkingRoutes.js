@@ -4,6 +4,7 @@ import {
   createLocation,
   getLocations,
   getLocationById,
+  getLocationLayout,
   updateLocation,
   deleteLocation,
   createFloor,
@@ -51,6 +52,7 @@ router.get('/locations', getLocations);
 router.post('/locations', requireAuth, requireRole('ADMIN', 'MANAGER'), locationValidation, createLocation);
 
 router.get('/locations/:id', getLocationById);
+router.get('/locations/:id/layout', requireAuth, requireRole('ADMIN', 'MANAGER'), getLocationLayout);
 router.put('/locations/:id', requireAuth, requireRole('ADMIN', 'MANAGER'), updateLocation);
 router.delete('/locations/:id', requireAuth, requireRole('ADMIN'), deleteLocation);
 

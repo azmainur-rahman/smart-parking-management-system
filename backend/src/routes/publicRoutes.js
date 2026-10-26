@@ -4,7 +4,8 @@ import {
   getPublicLocationById,
   getFloorsForLocation,
   getUnitsForFloor,
-  getSlotsForUnit
+  getSlotsForUnit,
+  getPublicPricing
 } from '../controllers/publicController.js';
 
 const router = express.Router();
@@ -15,6 +16,13 @@ const router = express.Router();
  * @access  Public
  */
 router.get('/locations', getPublicLocations);
+
+/**
+ * @route   GET /api/public/pricing
+ * @desc    Get public pricing rates
+ * @access  Public
+ */
+router.get('/pricing', getPublicPricing);
 
 /**
  * @route   GET /api/public/locations/:id
