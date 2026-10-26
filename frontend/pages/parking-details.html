@@ -7,6 +7,10 @@
   <meta name="description" content="View parking floors, zones, and unit bay availability for your scheduled parking duration.">
   <meta name="theme-color" content="#A8532E">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../images/favicon.png">
+
   <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,9 +79,6 @@
     </div>
   </main>
 
-  <!-- Global Public Site Footer Placeholder -->
-  <footer id="site-footer"></footer>
-
   <!-- Scripts -->
   <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
@@ -98,7 +99,7 @@
       const dateVal = params.get('date') || new Date().toISOString().split('T')[0];
       const timeVal = params.get('time') || '10:00';
       const durationVal = params.get('duration') || '2H';
-      const vehicleVal = params.get('vehicleType') || 'CAR';
+      let currentVehicle = (params.get('vehicleType') || 'CAR').toUpperCase();
 
       // Elements
       const headerContent = document.getElementById('location-header-content');
@@ -117,7 +118,7 @@
       if (dateVal) parkingParams.set('date', dateVal);
       if (timeVal) parkingParams.set('time', timeVal);
       if (durationVal) parkingParams.set('duration', durationVal);
-      if (vehicleVal) parkingParams.set('vehicleType', vehicleVal);
+      if (currentVehicle) parkingParams.set('vehicleType', currentVehicle);
       breadcrumbParkingLink.href = `parking.html?${parkingParams.toString()}`;
 
       if (!locationId) {
@@ -162,12 +163,61 @@
 
       const win = calculateWindow(dateVal, timeVal, durationVal);
 
-      // Render Schedule Banner
-      scheduleBanner.innerHTML = '';
-      const scheduleText = document.createElement('div');
-      scheduleText.className = 'results-filter-badge';
-      scheduleText.textContent = `Schedule Window: ${dateVal} at ${timeVal} • Duration: ${durationVal} • Vehicle: ${vehicleVal}`;
-      scheduleBanner.appendChild(scheduleText);
+      // Render Schedule Banner with Interactive Vehicle Type Switcher
+      function renderScheduleBanner() {
+        scheduleBanner.innerHTML = '';
+        scheduleBanner.style.display = 'flex';
+        scheduleBanner.style.justifyContent = 'space-between';
+        scheduleBanner.style.alignItems = 'center';
+        scheduleBanner.style.flexWrap = 'wrap';
+        scheduleBanner.style.gap = 'var(--space-3)';
+
+        const scheduleText = document.createElement('div');
+        scheduleText.className = 'results-filter-badge';
+        scheduleText.textContent = `Schedule: ${dateVal} at ${timeVal} (${durationVal})`;
+
+        const vehicleWrap = document.createElement('div');
+        vehicleWrap.style.display = 'flex';
+        vehicleWrap.style.alignItems = 'center';
+        vehicleWrap.style.gap = '6px';
+        vehicleWrap.style.flexWrap = 'wrap';
+
+        const label = document.createElement('span');
+        label.style.fontSize = '11px';
+        label.style.fontWeight = '600';
+        label.style.textTransform = 'uppercase';
+        label.style.letterSpacing = '0.05em';
+        label.style.color = 'var(--color-ink-muted)';
+        label.textContent = 'Vehicle Type:';
+        vehicleWrap.appendChild(label);
+
+        const types = [
+          { key: '', label: 'All Bays' },
+          { key: 'CAR', label: 'Car' },
+          { key: 'MOTORCYCLE', label: 'Motorcycle' },
+          { key: 'SUV', label: 'SUV' }
+        ];
+
+        types.forEach((t) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const isActive = currentVehicle === t.key;
+          btn.className = `btn ${isActive ? 'btn-primary' : 'btn-secondary'}`;
+          btn.style.fontSize = '11px';
+          btn.style.padding = '3px 10px';
+          btn.textContent = t.label;
+          btn.onclick = async () => {
+            currentVehicle = t.key;
+            renderScheduleBanner();
+            await loadFloors();
+          };
+          vehicleWrap.appendChild(btn);
+        });
+
+        scheduleBanner.appendChild(scheduleText);
+        scheduleBanner.appendChild(vehicleWrap);
+      }
+      renderScheduleBanner();
 
       let currentLocation = null;
       let selectedFloor = null;
@@ -338,7 +388,7 @@
             floorParams.set('startTime', win.startTimeIso);
             floorParams.set('endTime', win.endTimeIso);
           }
-          if (vehicleVal) floorParams.set('vehicleType', vehicleVal);
+          if (currentVehicle) floorParams.set('vehicleType', currentVehicle);
 
           const res = await apiRequest(`/public/locations/${locationId}/floors?${floorParams.toString()}`);
           const floors = res.floors || [];
@@ -371,18 +421,17 @@
             const stats = document.createElement('div');
             stats.className = 'floor-card-stats';
 
-            const availSpan = document.createElement('span');
-            availSpan.innerHTML = `Available: <strong>${floor.available}</strong>`;
-
-            const occSpan = document.createElement('span');
-            occSpan.innerHTML = ` • Occupied: <strong>${floor.occupied}</strong>`;
-
-            const totalSpan = document.createElement('span');
-            totalSpan.innerHTML = ` • Total: <strong>${floor.total}</strong>`;
-
-            stats.appendChild(availSpan);
-            stats.appendChild(occSpan);
-            stats.appendChild(totalSpan);
+            const availLabel = currentVehicle ? `Available (${currentVehicle}): ` : 'Available: ';
+            let statsHtml = `${availLabel}<strong>${floor.available}</strong>`;
+            statsHtml += ` • Occupied: <strong>${floor.occupied}</strong>`;
+            if (floor.incompatible > 0) {
+              statsHtml += ` • Other Vehicle: <strong>${floor.incompatible}</strong>`;
+            }
+            if (floor.disabled > 0) {
+              statsHtml += ` • Maintenance: <strong>${floor.disabled}</strong>`;
+            }
+            statsHtml += ` • Total: <strong>${floor.total}</strong>`;
+            stats.innerHTML = statsHtml;
 
             card.appendChild(name);
             card.appendChild(stats);
@@ -454,7 +503,7 @@
             unitParams.set('startTime', win.startTimeIso);
             unitParams.set('endTime', win.endTimeIso);
           }
-          if (vehicleVal) unitParams.set('vehicleType', vehicleVal);
+          if (currentVehicle) unitParams.set('vehicleType', currentVehicle);
 
           const res = await apiRequest(`/public/floors/${floor._id}/units?${unitParams.toString()}`);
           const units = res.units || [];
@@ -497,7 +546,17 @@
             stats.className = 'unit-card-stats';
 
             const pStats = document.createElement('p');
-            pStats.innerHTML = `Available: <strong>${unit.available}</strong> • Occupied: <strong>${unit.occupied}</strong> • Total: <strong>${unit.total}</strong>`;
+            const uAvailLabel = currentVehicle ? `Available (${currentVehicle}): ` : 'Available: ';
+            let uStatsHtml = `${uAvailLabel}<strong>${unit.available}</strong>`;
+            uStatsHtml += ` • Occupied: <strong>${unit.occupied}</strong>`;
+            if (unit.incompatible > 0) {
+              uStatsHtml += ` • Other Vehicle: <strong>${unit.incompatible}</strong>`;
+            }
+            if (unit.disabled > 0) {
+              uStatsHtml += ` • Maintenance: <strong>${unit.disabled}</strong>`;
+            }
+            uStatsHtml += ` • Total: <strong>${unit.total}</strong>`;
+            pStats.innerHTML = uStatsHtml;
             stats.appendChild(pStats);
             card.appendChild(stats);
 
@@ -509,7 +568,7 @@
             if (dateVal) bookingParams.set('date', dateVal);
             if (timeVal) bookingParams.set('time', timeVal);
             if (durationVal) bookingParams.set('duration', durationVal);
-            if (vehicleVal) bookingParams.set('vehicleType', vehicleVal);
+            if (currentVehicle) bookingParams.set('vehicleType', currentVehicle);
 
             const actionLink = document.createElement('a');
             actionLink.className = `unit-card-action ${unit.available === 0 ? 'is-disabled' : ''}`;

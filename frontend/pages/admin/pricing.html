@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing &amp; Rates Configuration — Smart Parking Admin</title>
+  <meta name="description" content="Configure hourly and daily parking tariffs across all vehicle categories.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
+  <!-- Google Fonts: Fraunces & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/admin-shell.js"></script>
+
+  <script>
+    async function initAdminPricing() {
+      try {
+        const appContent = renderAdminShell('pricing');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Tariff Policy';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Pricing & Policy Rules';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'Configure standard hourly and daily parking rates per vehicle category, service fees, and cancellation thresholds.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'admin-pricing-container';
+        container.style.maxWidth = '760px';
+        appContent.appendChild(container);
+
+        container.innerHTML = '<div style="padding: 20px; color: var(--color-ink-muted);">Loading current pricing rules...</div>';
+
+        try {
+          const res = await apiRequest('/admin/pricing');
+          const pricing = res.pricing || {};
+          const rates = pricing.rates || {};
+          const hourly = rates.hourly || {};
+          const daily = rates.daily || {};
+
+          container.innerHTML = `
+            <form id="pricing-form" style="background: #FFFFFF; border: 1px solid var(--color-border); padding: var(--space-6);">
+              
+              <!-- Hourly Rates -->
+              <h2 style="font-family: var(--font-heading); font-size: var(--text-lg); margin-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+                Hourly Rates (৳ / Hour)
+              </h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-6);">
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Car</label>
+                  <input type="number" name="hourly_car" value="${hourly.car || 50}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Motorcycle</label>
+                  <input type="number" name="hourly_motorcycle" value="${hourly.motorcycle || 30}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">SUV</label>
+                  <input type="number" name="hourly_suv" value="${hourly.suv || 80}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Microbus</label>
+                  <input type="number" name="hourly_microbus" value="${hourly.microbus || 90}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Pickup</label>
+                  <input type="number" name="hourly_pickup" value="${hourly.pickup || 70}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Van</label>
+                  <input type="number" name="hourly_van" value="${hourly.van || 70}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <!-- Daily Rates -->
+              <h2 style="font-family: var(--font-heading); font-size: var(--text-lg); margin-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+                Daily Rates (৳ / Day)
+              </h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-6);">
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Car</label>
+                  <input type="number" name="daily_car" value="${daily.car || 500}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Motorcycle</label>
+                  <input type="number" name="daily_motorcycle" value="${daily.motorcycle || 300}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">SUV</label>
+                  <input type="number" name="daily_suv" value="${daily.suv || 800}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Microbus</label>
+                  <input type="number" name="daily_microbus" value="${daily.microbus || 900}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Pickup</label>
+                  <input type="number" name="daily_pickup" value="${daily.pickup || 700}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="display:block; font-size: 11px; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Van</label>
+                  <input type="number" name="daily_van" value="${daily.van || 700}" class="form-input" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <!-- General Fees & Policies -->
+              <h2 style="font-family: var(--font-heading); font-size: var(--text-lg); margin-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+                Platform Policy &amp; Surcharges
+              </h2>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6);">
+                <div>
+                  <label style="display:block; font-size: 12px; font-weight:600; margin-bottom:4px;">Service Fee (৳)</label>
+                  <input type="number" name="serviceCharge" value="${pricing.serviceCharge || 10}" class="form-input" style="width:100%; box-sizing:border-box;">
+                  <span style="font-size: 11px; color: var(--color-ink-muted);">Applied once per confirmed reservation.</span>
+                </div>
+                <div>
+                  <label style="display:block; font-size: 12px; font-weight:600; margin-bottom:4px;">Free Cancellation Window (Hours)</label>
+                  <input type="number" name="freeCancellationHours" value="${pricing.freeCancellationHours || 2}" class="form-input" style="width:100%; box-sizing:border-box;">
+                  <span style="font-size: 11px; color: var(--color-ink-muted);">Hours before start time for full base rate refund.</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">Save Pricing Rules</button>
+              </div>
+            </form>
+          `;
+
+          container.querySelector('#pricing-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+
+            const payload = {
+              rates: {
+                hourly: {
+                  car: Number(fd.get('hourly_car')),
+                  motorcycle: Number(fd.get('hourly_motorcycle')),
+                  suv: Number(fd.get('hourly_suv')),
+                  microbus: Number(fd.get('hourly_microbus')),
+                  pickup: Number(fd.get('hourly_pickup')),
+                  van: Number(fd.get('hourly_van'))
+                },
+                daily: {
+                  car: Number(fd.get('daily_car')),
+                  motorcycle: Number(fd.get('daily_motorcycle')),
+                  suv: Number(fd.get('daily_suv')),
+                  microbus: Number(fd.get('daily_microbus')),
+                  pickup: Number(fd.get('daily_pickup')),
+                  van: Number(fd.get('daily_van'))
+                }
+              },
+              serviceCharge: Number(fd.get('serviceCharge')),
+              freeCancellationHours: Number(fd.get('freeCancellationHours'))
+            };
+
+            try {
+              await apiRequest('/admin/pricing', {
+                method: 'PUT',
+                body: payload
+              });
+              if (typeof showToast === 'function') showToast('Pricing rules saved successfully', 'success');
+              else alert('Pricing rules saved successfully.');
+            } catch (err) {
+              alert('Failed to save pricing: ' + err.message);
+            }
+          });
+
+        } catch (err) {
+          container.innerHTML = `<div class="error-notice">Failed to load pricing: ${err.message}</div>`;
+        }
+
+      } catch (err) {
+        console.error('Admin Pricing Init Error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminPricing);
+  </script>
+</body>
+</html>

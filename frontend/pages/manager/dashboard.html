@@ -7,6 +7,10 @@
   <meta name="description" content="Operational dashboard for parking facility managers and gate controllers.">
   <meta name="theme-color" content="#A8532E">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
   <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,21 +43,17 @@
         header.className = 'app-page-header';
 
         const titleWrap = document.createElement('div');
-        const eyebrow = document.createElement('p');
-        eyebrow.className = 'app-page-eyebrow';
-        eyebrow.textContent = 'Facility Operations';
-
-        const title = document.createElement('h1');
-        title.className = 'app-page-title';
-        title.textContent = 'Manager Dashboard';
-
-        const desc = document.createElement('p');
-        desc.className = 'app-page-desc';
-        desc.textContent = 'Real-time overview of bay occupancy, gate check-ins, and daily revenue for your assigned facilities.';
-
-        titleWrap.appendChild(eyebrow);
-        titleWrap.appendChild(title);
-        titleWrap.appendChild(desc);
+        titleWrap.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <p class="app-page-eyebrow" style="margin:0;">Facility Operations</p>
+            <span class="sp-telemetry-badge" style="padding:2px 8px; font-size:10px;">
+              <span class="sp-telemetry-dot"></span>
+              Sensors Online
+            </span>
+          </div>
+          <h1 class="app-page-title">Facility Manager Console</h1>
+          <p class="app-page-desc">Real-time overview of bay occupancy, gate check-ins, and daily revenue for your assigned facilities.</p>
+        `;
         header.appendChild(titleWrap);
         appContent.appendChild(header);
 
@@ -296,21 +296,24 @@
           const card = document.createElement('div');
           card.className = 'stat-card';
 
-          const lbl = document.createElement('span');
-          lbl.className = 'stat-card-label';
-          lbl.textContent = label;
+          const iconMap = {
+            "Today's Bookings": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+            'Active Parking': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>`,
+            'Available Slots': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8" cy="12" r="2"></circle><path d="m14 10 4 4"></path></svg>`,
+            "Today's Revenue": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`
+          };
 
-          const val = document.createElement('div');
-          val.className = 'stat-card-value';
-          val.textContent = value;
+          const iconSvg = iconMap[label] || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>`;
 
-          const sub = document.createElement('span');
-          sub.className = 'stat-card-sub';
-          sub.textContent = subtext;
+          card.innerHTML = `
+            <div class="stat-card-header">
+              <span class="stat-label">${label}</span>
+              <div class="stat-icon-wrap">${iconSvg}</div>
+            </div>
+            <div class="stat-value">${value}</div>
+            ${subtext ? `<div class="stat-subtext">${subtext}</div>` : ''}
+          `;
 
-          card.appendChild(lbl);
-          card.appendChild(val);
-          card.appendChild(sub);
           return card;
         }
 

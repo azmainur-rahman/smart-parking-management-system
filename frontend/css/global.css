@@ -5,12 +5,14 @@
   /* Color Palette */
   --color-ink: #14140F;
   --color-paper: #FAF8F3;
+  --color-surface: #FFFFFF;
   --color-muted: #6E6C64;
   --color-border: #E4E1D8;
   --color-accent: #A8532E;
 
   /* Typography */
   --font-display: 'Fraunces', serif;
+  --font-heading: var(--font-display);
   --font-body: 'Inter', sans-serif;
 
   /* Spacing Scale */
@@ -23,6 +25,19 @@
   --space-7: 48px;
   --space-8: 64px;
   --space-9: 96px;
+
+  /* Color Aliases */
+  --color-ink-muted: var(--color-muted);
+  --color-ink-light: #4A4843;
+
+  /* Typography Scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
 
   /* Layout & Geometry */
   --radius: 4px;

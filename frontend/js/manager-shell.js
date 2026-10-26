@@ -9,7 +9,7 @@ const MANAGER_NAV_CONFIG = [
   { key: 'slots', label: 'Parking Slots', path: 'pages/manager/slots.html' },
   { key: 'entry_exit', label: 'Entry / Exit', path: 'pages/manager/entry-exit.html' },
   { key: 'reports', label: 'Reports', path: 'pages/manager/reports.html' },
-  { key: 'profile', label: 'Profile', path: 'pages/customer/profile.html' }
+  { key: 'profile', label: 'Profile', path: 'pages/manager/profile.html' }
 ];
 
 /**
@@ -85,6 +85,12 @@ function renderManagerShell(activeKey) {
   const brandSummary = document.createElement('div');
   brandSummary.className = 'sidebar-brand-summary';
 
+  const logoLink = document.createElement('a');
+  logoLink.href = `${siteRoot}index.html`;
+  logoLink.className = 'sidebar-brand-link';
+  logoLink.setAttribute('aria-label', 'Return to Smart Parking Home');
+  logoLink.innerHTML = `<img src="${siteRoot}images/smart-parking-logo.svg" alt="Smart Parking System" class="sidebar-logo-img">`;
+
   const portalLabel = document.createElement('span');
   portalLabel.className = 'sidebar-portal-label';
   portalLabel.textContent = roleLabel;
@@ -93,6 +99,7 @@ function renderManagerShell(activeKey) {
   userNameEl.className = 'sidebar-user-name';
   userNameEl.textContent = fullName;
 
+  brandSummary.appendChild(logoLink);
   brandSummary.appendChild(portalLabel);
   brandSummary.appendChild(userNameEl);
   sidebarTop.appendChild(brandSummary);
@@ -177,16 +184,20 @@ function renderManagerShell(activeKey) {
   mobileTabBar.appendChild(mobileLogout);
 
   // --------------------------------------------------------------------------
-  // Main Content Landmark & #app-content container
+  // Main Content Landmark & #app-content container & Unified Footer
   // --------------------------------------------------------------------------
   const main = document.createElement('main');
   main.className = 'app-main';
   main.id = 'main-content';
+  main.style.display = 'flex';
+  main.style.flexDirection = 'column';
+  main.style.minHeight = '100vh';
 
   main.appendChild(mobileTabBar);
 
   const appContent = document.createElement('div');
   appContent.id = 'app-content';
+  appContent.style.flexGrow = '1';
   main.appendChild(appContent);
 
   shellRoot.appendChild(main);

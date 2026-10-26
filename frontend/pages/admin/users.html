@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User &amp; Role Management — Smart Parking Admin</title>
+  <meta name="description" content="Manage customer accounts, promote facility managers, and moderate account access.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
+  <!-- Google Fonts: Fraunces & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+  <!-- Scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/admin-shell.js"></script>
+
+  <script>
+    async function initAdminUsers() {
+      try {
+        const appContent = renderAdminShell('users');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'app-page-eyebrow';
+        eyebrow.textContent = 'Account Governance';
+
+        const title = document.createElement('h1');
+        title.className = 'app-page-title';
+        title.textContent = 'Users & Roles';
+
+        const desc = document.createElement('p');
+        desc.className = 'app-page-desc';
+        desc.textContent = 'View system accounts, assign manager permissions, and govern user access statuses.';
+
+        titleWrap.appendChild(eyebrow);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(desc);
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'admin-users-container';
+        appContent.appendChild(container);
+
+        // Filter and Action Bar
+        const topBar = document.createElement('div');
+        topBar.style.display = 'flex';
+        topBar.style.flexWrap = 'wrap';
+        topBar.style.gap = 'var(--space-3)';
+        topBar.style.marginBottom = 'var(--space-4)';
+        topBar.style.justifyContent = 'space-between';
+        topBar.style.alignItems = 'center';
+
+        const filterGroup = document.createElement('div');
+        filterGroup.style.display = 'flex';
+        filterGroup.style.gap = 'var(--space-2)';
+        filterGroup.style.flexWrap = 'wrap';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search name, email, phone...';
+        searchInput.className = 'form-input';
+        searchInput.style.width = '240px';
+
+        const roleSelect = document.createElement('select');
+        roleSelect.className = 'form-select';
+        roleSelect.innerHTML = `
+          <option value="">All Roles</option>
+          <option value="CUSTOMER">Customer</option>
+          <option value="MANAGER">Manager</option>
+          <option value="ADMIN">Admin</option>
+        `;
+
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'form-select';
+        statusSelect.innerHTML = `
+          <option value="">All Statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="BLOCKED">Blocked</option>
+          <option value="SUSPENDED">Suspended</option>
+        `;
+
+        const filterBtn = document.createElement('button');
+        filterBtn.type = 'button';
+        filterBtn.className = 'btn btn-secondary';
+        filterBtn.textContent = 'Filter';
+        filterBtn.addEventListener('click', () => fetchUsers(1));
+
+        filterGroup.appendChild(searchInput);
+        filterGroup.appendChild(roleSelect);
+        filterGroup.appendChild(statusSelect);
+        filterGroup.appendChild(filterBtn);
+        topBar.appendChild(filterGroup);
+
+        // Create User Button
+        const createBtn = document.createElement('button');
+        createBtn.type = 'button';
+        createBtn.className = 'btn btn-primary';
+        createBtn.textContent = '+ Create User / Manager';
+        createBtn.addEventListener('click', () => showCreateUserModal());
+        topBar.appendChild(createBtn);
+
+        container.appendChild(topBar);
+
+        // Table Mount
+        const tableContainer = document.createElement('div');
+        container.appendChild(tableContainer);
+
+        let currentPage = 1;
+
+        async function fetchUsers(page = 1) {
+          currentPage = page;
+          tableContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-ink-muted);">Loading accounts...</div>';
+
+          const query = searchInput.value.trim();
+          const role = roleSelect.value;
+          const status = statusSelect.value;
+
+          let url = `/admin/users?page=${page}&limit=20`;
+          if (query) url += `&q=${encodeURIComponent(query)}`;
+          if (role) url += `&role=${encodeURIComponent(role)}`;
+          if (status) url += `&status=${encodeURIComponent(status)}`;
+
+          try {
+            const res = await apiRequest(url);
+            renderUsersTable(res.users || [], res.pagination || {});
+          } catch (err) {
+            tableContainer.innerHTML = `<div class="error-notice">Failed to load users: ${err.message}</div>`;
+          }
+        }
+
+        function renderUsersTable(users, pagination) {
+          if (users.length === 0) {
+            tableContainer.innerHTML = '<div style="padding: 40px; background: #fff; border: 1px solid var(--color-border); text-align: center; color: var(--color-ink-muted);">No accounts matched your query.</div>';
+            return;
+          }
+
+          const wrap = document.createElement('div');
+          wrap.style.overflowX = 'auto';
+          wrap.style.background = '#FFFFFF';
+          wrap.style.border = '1px solid var(--color-border)';
+
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.fontSize = 'var(--text-xs)';
+
+          table.innerHTML = `
+            <thead>
+              <tr style="border-bottom: 1px solid var(--color-border); text-align: left; background: var(--color-surface);">
+                <th style="padding: 10px 14px;">User</th>
+                <th style="padding: 10px 14px;">Email & Phone</th>
+                <th style="padding: 10px 14px;">Role</th>
+                <th style="padding: 10px 14px;">Status</th>
+                <th style="padding: 10px 14px;">Created</th>
+                <th style="padding: 10px 14px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr style="border-bottom: 1px solid var(--color-border);" data-userid="${u._id}">
+                  <td style="padding: 10px 14px;">
+                    <strong style="display:block; color: var(--color-ink);">${u.name}</strong>
+                    <span style="color: var(--color-ink-muted); font-size: 11px;">ID: ${u._id}</span>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <div>${u.email}</div>
+                    <div style="color: var(--color-ink-muted);">${u.phone || 'No phone'}</div>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <select class="form-select role-changer" data-id="${u._id}" style="font-size: 11px; padding: 3px 6px;">
+                      <option value="CUSTOMER" ${u.role === 'CUSTOMER' ? 'selected' : ''}>CUSTOMER</option>
+                      <option value="MANAGER" ${u.role === 'MANAGER' ? 'selected' : ''}>MANAGER</option>
+                      <option value="ADMIN" ${u.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
+                    </select>
+                  </td>
+                  <td style="padding: 10px 14px;">
+                    <select class="form-select status-changer" data-id="${u._id}" style="font-size: 11px; padding: 3px 6px;">
+                      <option value="ACTIVE" ${u.status === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+                      <option value="BLOCKED" ${u.status === 'BLOCKED' ? 'selected' : ''}>BLOCKED</option>
+                      <option value="SUSPENDED" ${u.status === 'SUSPENDED' ? 'selected' : ''}>SUSPENDED</option>
+                    </select>
+                  </td>
+                  <td style="padding: 10px 14px; color: var(--color-ink-muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td style="padding: 10px 14px; text-align: right;">
+                    <span style="font-size: 11px; color: var(--color-accent); font-weight: 500;">Saved auto</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+
+          wrap.appendChild(table);
+          tableContainer.innerHTML = '';
+          tableContainer.appendChild(wrap);
+
+          // Pagination Controls
+          if (pagination.totalPages > 1) {
+            const pageDiv = document.createElement('div');
+            pageDiv.style.display = 'flex';
+            pageDiv.style.justifyContent = 'space-between';
+            pageDiv.style.alignItems = 'center';
+            pageDiv.style.marginTop = 'var(--space-4)';
+
+            const pageInfo = document.createElement('span');
+            pageInfo.style.fontSize = 'var(--text-xs)';
+            pageInfo.style.color = 'var(--color-ink-muted)';
+            pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} accounts)`;
+
+            const btnWrap = document.createElement('div');
+            btnWrap.style.display = 'flex';
+            btnWrap.style.gap = 'var(--space-2)';
+
+            if (pagination.page > 1) {
+              const prev = document.createElement('button');
+              prev.className = 'btn btn-secondary';
+              prev.style.padding = '4px 10px';
+              prev.textContent = '← Prev';
+              prev.onclick = () => fetchUsers(pagination.page - 1);
+              btnWrap.appendChild(prev);
+            }
+
+            if (pagination.page < pagination.totalPages) {
+              const next = document.createElement('button');
+              next.className = 'btn btn-secondary';
+              next.style.padding = '4px 10px';
+              next.textContent = 'Next →';
+              next.onclick = () => fetchUsers(pagination.page + 1);
+              btnWrap.appendChild(next);
+            }
+
+            pageDiv.appendChild(pageInfo);
+            pageDiv.appendChild(btnWrap);
+            tableContainer.appendChild(pageDiv);
+          }
+
+          // Attach listeners to Role and Status changers
+          wrap.querySelectorAll('.role-changer').forEach(select => {
+            select.addEventListener('change', async (e) => {
+              const userId = e.target.getAttribute('data-id');
+              const newRole = e.target.value;
+              try {
+                await apiRequest(`/admin/users/${userId}/role`, {
+                  method: 'PUT',
+                  body: { role: newRole }
+                });
+                if (typeof showToast === 'function') showToast(`Role updated to ${newRole}`, 'success');
+              } catch (err) {
+                alert('Failed to update role: ' + err.message);
+                fetchUsers(currentPage);
+              }
+            });
+          });
+
+          wrap.querySelectorAll('.status-changer').forEach(select => {
+            select.addEventListener('change', async (e) => {
+              const userId = e.target.getAttribute('data-id');
+              const newStatus = e.target.value;
+              try {
+                await apiRequest(`/admin/users/${userId}/status`, {
+                  method: 'PUT',
+                  body: { status: newStatus }
+                });
+                if (typeof showToast === 'function') showToast(`Status updated to ${newStatus}`, 'success');
+              } catch (err) {
+                alert('Failed to update status: ' + err.message);
+                fetchUsers(currentPage);
+              }
+            });
+          });
+        }
+
+        function showCreateUserModal() {
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.inset = '0';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '9999';
+
+          const modal = document.createElement('div');
+          modal.style.background = '#FFFFFF';
+          modal.style.border = '1px solid var(--color-border)';
+          modal.style.padding = 'var(--space-6)';
+          modal.style.width = '100%';
+          modal.style.maxWidth = '460px';
+          modal.style.boxSizing = 'border-box';
+
+          modal.innerHTML = `
+            <h2 style="font-family: var(--font-heading); font-size: var(--text-xl); margin-bottom: var(--space-4);">Create New Account</h2>
+            <form id="create-user-form">
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Full Name *</label>
+                <input type="text" name="name" required class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Email Address *</label>
+                <input type="email" name="email" required class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Temporary Password *</label>
+                <input type="password" name="password" required class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="margin-bottom: var(--space-3);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Phone Number</label>
+                <input type="text" name="phone" class="form-input" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="margin-bottom: var(--space-4);">
+                <label style="display:block; font-size: var(--text-xs); font-weight: 600; margin-bottom: 4px;">Role *</label>
+                <select name="role" class="form-select" style="width:100%; box-sizing:border-box;">
+                  <option value="CUSTOMER">Customer</option>
+                  <option value="MANAGER">Facility Manager</option>
+                  <option value="ADMIN">System Administrator</option>
+                </select>
+              </div>
+              <div style="display:flex; justify-content: flex-end; gap: var(--space-3);">
+                <button type="button" id="modal-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+              </div>
+            </form>
+          `;
+
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+
+          modal.querySelector('#modal-cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+          });
+
+          modal.querySelector('#create-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+
+            try {
+              await apiRequest('/admin/users', {
+                method: 'POST',
+                body: payload
+              });
+              if (typeof showToast === 'function') showToast('Account created successfully', 'success');
+              document.body.removeChild(overlay);
+              fetchUsers(1);
+            } catch (err) {
+              alert('Error creating user: ' + err.message);
+            }
+          });
+        }
+
+        // Initial fetch
+        fetchUsers(1);
+
+      } catch (err) {
+        console.error('Admin Users Init Error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminUsers);
+  </script>
+</body>
+</html>

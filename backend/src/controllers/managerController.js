@@ -105,7 +105,7 @@ export const getManagerDashboard = async (req, res) => {
       dashboard: {
         todayBookings,
         activeParking,
-        availableSlots: availableSlotsCount,
+        availableSlots: Math.max(0, availableSlotsCount - activeParking),
         todayRevenue,
         assignedLocations,
         recentBookings
@@ -732,7 +732,7 @@ export const getManagerReportsSummary = async (req, res) => {
       cancelled: cancelledCount,
       revenue,
       occupiedSlots: occupiedSlotsCount,
-      availableSlots: availableSlotsCount
+      availableSlots: Math.max(0, availableSlotsCount - occupiedSlotsCount)
     };
 
     return res.status(200).json({

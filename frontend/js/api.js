@@ -3,14 +3,27 @@
  * Plain Vanilla JS HTTP client handling headers, authentication, and error normalization.
  */
 
-async function apiRequest(path, options = {}) {
+async function apiRequest(path, options = {}, maybeBody = null) {
   const baseUrl = (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : (window.API_BASE_URL || 'http://localhost:5000/api')).replace(/\/$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const url = path.startsWith('http://') || path.startsWith('https://') ? path : `${baseUrl}${cleanPath}`;
 
+  let opts = {};
+  if (typeof options === 'string') {
+    opts.method = options.toUpperCase();
+    if (maybeBody !== null && maybeBody !== undefined) {
+      opts.body = typeof maybeBody === 'string' ? maybeBody : JSON.stringify(maybeBody);
+    }
+  } else if (options && typeof options === 'object') {
+    opts = { ...options };
+    if (opts.body && typeof opts.body === 'object') {
+      opts.body = JSON.stringify(opts.body);
+    }
+  }
+
   const headers = {
     'Content-Type': 'application/json',
-    ...(options.headers || {})
+    ...(opts.headers || {})
   };
 
   const token = localStorage.getItem('sp_token');
@@ -19,7 +32,7 @@ async function apiRequest(path, options = {}) {
   }
 
   const fetchOptions = {
-    ...options,
+    ...opts,
     headers
   };
 

@@ -4,70 +4,275 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Smart Parking System</title>
+  <meta name="description" content="Centralized administration console for system analytics, users, parking facilities, and revenue oversight.">
+  <meta name="theme-color" content="#A8532E">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../../images/favicon.png">
+
+  <!-- Google Fonts: Fraunces & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
   <link rel="stylesheet" href="../../css/global.css">
   <link rel="stylesheet" href="../../css/navbar.css">
   <link rel="stylesheet" href="../../css/components.css">
-  <style>
-    .admin-placeholder {
-      padding: var(--space-12) 0;
-      min-height: 60vh;
-      display: flex;
-      align-items: center;
-    }
-    .placeholder-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      padding: var(--space-8);
-      max-width: 640px;
-      margin: 0 auto;
-    }
-    .placeholder-title {
-      font-family: var(--font-heading);
-      font-size: var(--text-2xl);
-      font-weight: 600;
-      color: var(--color-ink);
-      margin-bottom: var(--space-3);
-    }
-    .placeholder-desc {
-      color: var(--color-ink-muted);
-      font-size: var(--text-sm);
-      line-height: 1.6;
-      margin-bottom: var(--space-6);
-    }
-    .placeholder-actions {
-      display: flex;
-      gap: var(--space-4);
-      flex-wrap: wrap;
-    }
-  </style>
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/manager.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
 </head>
 <body>
-  <div id="site-header"></div>
-
-  <main id="main-content" class="admin-placeholder" tabindex="-1">
-    <div class="container">
-      <div class="placeholder-card">
-        <span class="status-badge" style="border: 1px solid var(--color-border); padding: 4px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 16px; display: inline-block;">System Administration</span>
-        <h1 class="placeholder-title">Administrator Portal</h1>
-        <p class="placeholder-desc">The centralized administration console is currently being configured. You may access facility operations and live parking oversight via the Manager Console.</p>
-        <div class="placeholder-actions">
-          <a href="../manager/dashboard.html" class="btn btn-primary" style="display:inline-block; padding: 10px 18px; background: var(--color-accent); color: #fff; text-decoration: none; font-size: 13px; font-weight: 600;">Go to Manager Console</a>
-          <a href="../../index.html" class="btn btn-secondary" style="display:inline-block; padding: 10px 18px; border: 1px solid var(--color-border); color: var(--color-ink); text-decoration: none; font-size: 13px; font-weight: 500;">Return to Home</a>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <div id="site-footer"></div>
-
+  <!-- Scripts -->
   <script src="../../js/config.js"></script>
   <script src="../../js/api.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/ui.js"></script>
-  <script src="../../js/navbar.js"></script>
-  <script src="../../js/site-chrome.js"></script>
+  <script src="../../js/admin-shell.js"></script>
+
+  <script>
+    async function initAdminDashboard() {
+      try {
+        const appContent = renderAdminShell('dashboard');
+        if (!appContent) return;
+
+        // 1. Header
+        const header = document.createElement('header');
+        header.className = 'app-page-header';
+
+        const titleWrap = document.createElement('div');
+        titleWrap.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <p class="app-page-eyebrow" style="margin:0;">Platform Operations</p>
+            <span class="sp-telemetry-badge" style="padding:2px 8px; font-size:10px;">
+              <span class="sp-telemetry-dot"></span>
+              Live Grid Active
+            </span>
+          </div>
+          <h1 class="app-page-title">Executive Parking Operations</h1>
+          <p class="app-page-desc">Comprehensive oversight of revenue collections, user accounts, bay capacity, and live reservations.</p>
+        `;
+        header.appendChild(titleWrap);
+        appContent.appendChild(header);
+
+        // Mount Container
+        const container = document.createElement('div');
+        container.id = 'admin-dashboard-container';
+        appContent.appendChild(container);
+
+        if (typeof loadingSkeleton === 'function') {
+          container.appendChild(loadingSkeleton(4, 'card'));
+        }
+
+        async function loadDashboard() {
+          container.innerHTML = '';
+
+          try {
+            const res = await apiRequest('/admin/dashboard');
+            const data = res.data || {};
+            const stats = data.stats || {};
+            const recent = data.recentBookings || [];
+
+            // 2. Metrics Statistics Grid
+            const statGrid = document.createElement('section');
+            statGrid.className = 'stat-grid';
+            statGrid.setAttribute('aria-label', 'Key Performance Indicators');
+
+            // Total Revenue
+            statGrid.appendChild(createStatCard('Total Revenue', `৳${stats.totalRevenue || 0}`, 'Settled customer payments'));
+
+            // Total Bookings
+            statGrid.appendChild(createStatCard('Total Bookings', stats.totalBookings || 0, `${stats.activeBookings || 0} currently active`));
+
+            // System Occupancy
+            statGrid.appendChild(createStatCard('Bay Occupancy', `${stats.occupancyRate || 0}%`, `${stats.occupiedSlots || 0} of ${stats.totalSlots || 0} occupied`));
+
+            // Registered Users
+            statGrid.appendChild(createStatCard('Total Users', stats.totalUsers || 0, `${stats.totalCustomers || 0} customers, ${stats.totalManagers || 0} managers`));
+
+            // Facilities Count
+            statGrid.appendChild(createStatCard('Active Facilities', stats.totalLocations || 0, 'Commercial parking facilities'));
+
+            // Available Slots
+            statGrid.appendChild(createStatCard('Available Slots', stats.availableSlots || 0, 'Open parking bays across city'));
+
+            container.appendChild(statGrid);
+
+            // 3. Quick Action Shortcuts Section
+            const actionSection = document.createElement('section');
+            actionSection.style.marginBlock = 'var(--space-6)';
+
+            const actionHeading = document.createElement('h2');
+            actionHeading.className = 'section-title';
+            actionHeading.style.fontSize = 'var(--text-lg)';
+            actionHeading.style.marginBottom = 'var(--space-3)';
+            actionHeading.textContent = 'Administrative Actions';
+            actionSection.appendChild(actionHeading);
+
+            const actionGrid = document.createElement('div');
+            actionGrid.style.display = 'grid';
+            actionGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+            actionGrid.style.gap = 'var(--space-3)';
+
+            const actions = [
+              { label: 'Manage Users & Roles', href: 'users.html', desc: 'Promote managers, block accounts' },
+              { label: 'Facilities & Slots', href: 'facilities.html', desc: 'Add locations, configure bays' },
+              { label: 'Financial Ledger', href: 'payments.html', desc: 'Audit payments and transactions' },
+              { label: 'Pricing Configuration', href: 'pricing.html', desc: 'Update hourly & daily rates' }
+            ];
+
+            actions.forEach(act => {
+              const card = document.createElement('a');
+              card.href = act.href;
+              card.style.display = 'block';
+              card.style.padding = 'var(--space-4)';
+              card.style.background = '#FFFFFF';
+              card.style.border = '1px solid var(--color-border)';
+              card.style.textDecoration = 'none';
+              card.style.color = 'inherit';
+
+              const cardTitle = document.createElement('strong');
+              cardTitle.style.display = 'block';
+              cardTitle.style.color = 'var(--color-ink)';
+              cardTitle.style.fontSize = 'var(--text-sm)';
+              cardTitle.textContent = act.label;
+
+              const cardDesc = document.createElement('span');
+              cardDesc.style.display = 'block';
+              cardDesc.style.fontSize = 'var(--text-xs)';
+              cardDesc.style.color = 'var(--color-ink-muted)';
+              cardDesc.style.marginTop = 'var(--space-1)';
+              cardDesc.textContent = act.desc;
+
+              card.appendChild(cardTitle);
+              card.appendChild(cardDesc);
+              actionGrid.appendChild(card);
+            });
+
+            actionSection.appendChild(actionGrid);
+            container.appendChild(actionSection);
+
+            // 4. Recent Bookings Table
+            const recentSection = document.createElement('section');
+            recentSection.style.marginTop = 'var(--space-6)';
+
+            const recentHead = document.createElement('div');
+            recentHead.style.display = 'flex';
+            recentHead.style.justifyContent = 'space-between';
+            recentHead.style.alignItems = 'center';
+            recentHead.style.marginBottom = 'var(--space-3)';
+
+            const recentTitle = document.createElement('h2');
+            recentTitle.className = 'section-title';
+            recentTitle.style.fontSize = 'var(--text-lg)';
+            recentTitle.textContent = 'Recent System Bookings';
+
+            const viewAllLink = document.createElement('a');
+            viewAllLink.href = 'bookings.html';
+            viewAllLink.style.fontSize = 'var(--text-xs)';
+            viewAllLink.style.color = 'var(--color-accent)';
+            viewAllLink.style.fontWeight = '600';
+            viewAllLink.textContent = 'View All Bookings →';
+
+            recentHead.appendChild(recentTitle);
+            recentHead.appendChild(viewAllLink);
+            recentSection.appendChild(recentHead);
+
+            if (recent.length === 0) {
+              const emptyCard = document.createElement('div');
+              emptyCard.style.padding = 'var(--space-6)';
+              emptyCard.style.background = '#FFFFFF';
+              emptyCard.style.border = '1px solid var(--color-border)';
+              emptyCard.style.textAlign = 'center';
+              emptyCard.style.color = 'var(--color-ink-muted)';
+              emptyCard.textContent = 'No reservations have been recorded yet.';
+              recentSection.appendChild(emptyCard);
+            } else {
+              const tableWrapper = document.createElement('div');
+              tableWrapper.style.overflowX = 'auto';
+              tableWrapper.style.background = '#FFFFFF';
+              tableWrapper.style.border = '1px solid var(--color-border)';
+
+              const table = document.createElement('table');
+              table.style.width = '100%';
+              table.style.borderCollapse = 'collapse';
+              table.style.fontSize = 'var(--text-xs)';
+
+              table.innerHTML = `
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--color-border); text-align: left; background: var(--color-surface);">
+                    <th style="padding: 10px 14px;">Booking #</th>
+                    <th style="padding: 10px 14px;">Customer</th>
+                    <th style="padding: 10px 14px;">Facility</th>
+                    <th style="padding: 10px 14px;">Slot</th>
+                    <th style="padding: 10px 14px;">Amount</th>
+                    <th style="padding: 10px 14px;">Status</th>
+                    <th style="padding: 10px 14px;">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${recent.map(b => `
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                      <td style="padding: 10px 14px; font-weight: 600;">${b.bookingNumber || '-'}</td>
+                      <td style="padding: 10px 14px;">${b.userId ? b.userId.name : 'Unknown'}</td>
+                      <td style="padding: 10px 14px;">${b.locationId ? b.locationId.name : '-'}</td>
+                      <td style="padding: 10px 14px; font-weight: 500;">${b.slotId ? b.slotId.slotNumber : '-'}</td>
+                      <td style="padding: 10px 14px; font-weight: 600;">৳${b.totalAmount || 0}</td>
+                      <td style="padding: 10px 14px;"><span class="badge ${b.bookingStatus === 'CONFIRMED' || b.bookingStatus === 'COMPLETED' ? 'badge-success' : (b.bookingStatus === 'ACTIVE' ? 'badge-info' : 'badge-warning')}">${b.bookingStatus}</span></td>
+                      <td style="padding: 10px 14px; color: var(--color-ink-muted);">${new Date(b.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              `;
+              tableWrapper.appendChild(table);
+              recentSection.appendChild(tableWrapper);
+            }
+
+            container.appendChild(recentSection);
+
+          } catch (err) {
+            console.error('Admin dashboard error:', err);
+            container.innerHTML = `<div class="error-notice">Failed to load administrator metrics: ${err.message}</div>`;
+          }
+        }
+
+        function createStatCard(label, value, subtext = '') {
+          const card = document.createElement('div');
+          card.className = 'stat-card';
+
+          const iconMap = {
+            'Total Revenue': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
+            'Total Bookings': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+            'Bay Occupancy': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>`,
+            'Total Users': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+            'Active Facilities': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line><line x1="15" y1="18" x2="15" y2="18.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line></svg>`,
+            'Available Slots': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8" cy="12" r="2"></circle><path d="m14 10 4 4"></path></svg>`
+          };
+
+          const iconSvg = iconMap[label] || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+          card.innerHTML = `
+            <div class="stat-card-header">
+              <span class="stat-label">${label}</span>
+              <div class="stat-icon-wrap">${iconSvg}</div>
+            </div>
+            <div class="stat-value">${value}</div>
+            ${subtext ? `<div class="stat-subtext">${subtext}</div>` : ''}
+          `;
+
+          return card;
+        }
+
+        loadDashboard();
+
+      } catch (err) {
+        console.error('Admin Init Error:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminDashboard);
+  </script>
 </body>
 </html>

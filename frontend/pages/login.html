@@ -7,6 +7,10 @@
   <meta name="description" content="Sign in to your Smart Parking account to manage vehicle reservations and parking passes.">
   <meta name="theme-color" content="#A8532E">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../images/smart-parking-icon.svg">
+  <link rel="alternate icon" type="image/png" href="../images/favicon.png">
+
   <!-- Google Fonts: Fraunces (Serif) & Inter (Sans-Serif) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +19,7 @@
   <!-- Core Stylesheets -->
   <link rel="stylesheet" href="../css/global.css">
   <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/auth.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
@@ -108,12 +113,6 @@
     </div>
   </main>
 
-  <footer class="auth-page-footer">
-    <div class="container">
-      <p>&copy; 2026 Smart Parking System. All rights reserved.</p>
-    </div>
-  </footer>
-
   <!-- Scripts -->
   <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
@@ -128,7 +127,13 @@
       function getValidRedirectTarget() {
         const urlParams = new URLSearchParams(window.location.search);
         const next = urlParams.get('next');
-        const defaultTarget = siteRoot + 'pages/customer/dashboard.html';
+        const user = typeof getUser === 'function' ? getUser() : null;
+        let defaultTarget = siteRoot + 'pages/customer/dashboard.html';
+        if (user && user.role === 'ADMIN') {
+          defaultTarget = siteRoot + 'pages/admin/dashboard.html';
+        } else if (user && user.role === 'MANAGER') {
+          defaultTarget = siteRoot + 'pages/manager/dashboard.html';
+        }
         if (!next) return defaultTarget;
 
         if (
